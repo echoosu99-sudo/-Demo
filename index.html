@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户体验与人因测量平台</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<style>
+  /* ===== CSS Variables ===== */
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #eaeaea;
+    --border-soft: #f0f0f0;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-muted: #aaaaaa;
+    --accent: #1a1a2e;
+    --accent-hover: #16213e;
+    --accent-light: #e8eaf6;
+    --danger: #d32f2f;
+    --danger-light: #ffebee;
+    --success: #2e7d32;
+    --success-light: #e8f5e9;
+    --warn: #f57c00;
+    --warn-light: #fff3e0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+    --radius: 8px;
+    --radius-sm: 4px;
+    --transition: 0.18s ease;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.6;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== Top Nav ===== */
+  #top-nav {
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    flex-shrink: 0;
+    z-index: 10;
+    position: relative;
+  }
+  #top-nav h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+  }
+  #browser-check {
+    position: absolute;
+    right: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ===== Three Column Layout ===== */
+  #main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .col {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 16px;
+    flex-shrink: 0;
+  }
+  .col::-webkit-scrollbar { width: 4px; }
+  .col::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+  #col-left { width: 30%; border-right: 1px solid var(--border); }
+  #col-mid { width: 40%; border-right: 1px solid var(--border); }
+  #col-right { width: 30%; }
+
+  /* ===== Section Headers ===== */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--bg); border-color: #ccc; }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid transparent;
+  }
+  .btn-danger:hover { background: var(--danger-light); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* ===== Folder Select ===== */
+  .folder-btn {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition);
+    margin-bottom: 12px;
+  }
+  .folder-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* ===== Resource List ===== */
+  .resource-list { list-style: none; }
+  .resource-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition);
+    position: relative;
+  }
+  .resource-item:hover { background: var(--bg); }
+  .resource-item.selected { background: var(--accent-light); }
+  .resource-item .item-name {
+    flex: 1;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resource-item .item-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .resource-item .item-actions {
+    display: none;
+    gap: 4px;
+  }
+  .resource-item:hover .item-actions { display: flex; }
+  .icon-btn {
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: background var(--transition);
+  }
+  .icon-btn:hover { background: rgba(0,0,0,0.06); }
+
+  input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .list-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .list-controls span { font-size: 12px; color: var(--text-muted); flex: 1; }
+
+  .empty-tip {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 24px 0;
+  }
+
+  /* ===== Scale section ===== */
+  .scale-subsection { margin-top: 20px; }
+
+  select.multi-select {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color var(--transition);
+  }
+  select.multi-select:focus { border-color: var(--accent); }
+
+  .scale-item-config {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    margin-top: 6px;
+    gap: 8px;
+  }
+  .scale-item-config span { font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scale-item-config select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px;
+    font-size: 12px;
+    background: var(--surface);
+    outline: none;
+  }
+
+  /* ===== Middle Column ===== */
+  .mid-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
+    color: var(--text-muted);
+    gap: 12px;
+    text-align: center;
+  }
+  .mid-placeholder .big-icon { font-size: 40px; }
+
+  .experiment-editor { display: flex; flex-direction: column; gap: 16px; }
+
+  .bare-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    width: 100%;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+    transition: border-color var(--transition);
+  }
+  .bare-input:focus { border-bottom-color: var(--accent); }
+  .bare-input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+  .bare-textarea {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-secondary);
+    width: 100%;
+    resize: none;
+    min-height: 40px;
+    padding: 4px 0;
+    font-family: inherit;
+    line-height: 1.6;
+  }
+  .bare-textarea::placeholder { color: var(--text-muted); }
+
+  /* ===== Block Cards ===== */
+  .block-section { }
+  .block-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .block-list { list-style: none; min-height: 40px; }
+  .block-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    margin-bottom: 6px;
+    cursor: default;
+    transition: box-shadow var(--transition);
+  }
+  .block-card:hover { box-shadow: var(--shadow-sm); }
+  .block-card.sortable-ghost { opacity: 0.4; }
+  .drag-handle {
+    color: var(--text-muted);
+    cursor: grab;
+    font-size: 14px;
+    padding: 2px;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .block-card .card-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .block-card .card-meta { font-size: 11px; color: var(--text-muted); }
+  .block-card .card-remove {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+  }
+  .block-card .card-remove:hover { background: var(--danger-light); color: var(--danger); }
+
+  .empty-block {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  /* ===== Right Column ===== */
+  .create-btn-wrap { margin-bottom: 16px; }
+
+  .experiment-list { list-style: none; }
+  .experiment-list-item {
+    padding: 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .experiment-list-item:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+  .experiment-list-item.active { border-color: var(--accent); background: var(--accent-light); }
+  .exp-item-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .exp-item-meta { font-size: 11px; color: var(--text-muted); }
+  .exp-item-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+  /* ===== Data Table ===== */
+  .data-section { margin-top: 24px; }
+  .data-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 120px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color var(--transition);
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  .data-table-wrap { overflow-x: auto; }
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .data-table th:hover { color: var(--text-primary); }
+  .data-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-primary);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .data-table tr:hover td { background: var(--bg); }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .page-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-btn:hover { border-color: var(--accent); }
+  .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .page-info { font-size: 12px; color: var(--text-muted); }
+
+  /* ===== Modal / Overlay ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.2s ease;
+    max-height: 90vh;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .modal-header h3 { font-size: 15px; font-weight: 600; }
+  .modal-close {
+    width: 28px; height: 28px;
+    border: none; background: transparent;
+    cursor: pointer; border-radius: var(--radius-sm);
+    font-size: 18px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--transition);
+  }
+  .modal-close:hover { background: var(--bg); }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ===== Media Preview Modal ===== */
+  .preview-img { max-width: 100%; max-height: 70vh; display: block; margin: auto; border-radius: var(--radius); }
+  .preview-video { max-width: 100%; max-height: 70vh; display: block; margin: auto; border-radius: var(--radius); }
+
+  /* ===== Preview Experiment Modal ===== */
+  #preview-modal .modal-box { width: 800px; max-width: 96vw; }
+  .preview-section { margin-bottom: 24px; }
+  .preview-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .preview-media-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .preview-thumb {
+    width: 80px; height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .preview-scale-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .preview-scale-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+  .preview-question-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .preview-question-row:last-child { border-bottom: none; }
+  .preview-q-text {
+    flex: 1;
+    font-size: 13px;
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    outline: none;
+    line-height: 1.6;
+    transition: border-color var(--transition);
+    word-break: break-all;
+  }
+  .preview-q-text:hover { border-color: var(--border); background: var(--bg); }
+  .preview-q-text:focus { border-color: var(--accent); background: var(--surface); }
+  .remove-q-btn {
+    border: none; background: transparent;
+    cursor: pointer; color: var(--text-muted);
+    font-size: 14px; padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .remove-q-btn:hover { background: var(--danger-light); color: var(--danger); }
+
+  /* ===== Subject Info Modal ===== */
+  #subject-modal .modal-box { width: 400px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .form-control {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color var(--transition);
+    font-family: inherit;
+  }
+  .form-control:focus { border-color: var(--accent); }
+
+  /* ===== Experiment Execution Mode ===== */
+  #exec-screen {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+  }
+  #exec-screen.active {
+    display: flex !important;
+  }
+
+  .exec-header {
+    width: 100%;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .exec-title { font-size: 15px; font-weight: 600; }
+  .exec-progress { font-size: 13px; color: var(--text-muted); }
+
+  .exec-body {
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .instruction-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 32px;
+    text-align: center;
+    max-width: 560px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  .instruction-icon { font-size: 32px; margin-bottom: 12px; }
+  .instruction-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); }
+
+  .media-display {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .media-display img {
+    max-width: 100%;
+    max-height: 55vh;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    cursor: zoom-in;
+  }
+  .media-display video {
+    max-width: 100%;
+    max-height: 55vh;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+  }
+  .media-counter { font-size: 13px; color: var(--text-muted); }
+
+  /* ===== Question answering ===== */
+  .question-block {
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 24px;
+  }
+  .question-text {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 14px;
+    line-height: 1.7;
+  }
+  .question-text.answered { color: var(--text-muted); }
+
+  .likert-scale {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .likert-btn {
+    flex: 1;
+    min-width: 36px;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    transition: all var(--transition);
+    color: var(--text-secondary);
+  }
+  .likert-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .likert-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .likert-btn.answered { opacity: 0.5; }
+
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .q-nav { display: flex; gap: 10px; margin-top: 8px; }
+
+  .exec-footer {
+    width: 100%;
+    padding: 16px 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  /* ===== Confirm Dialog ===== */
+  #confirm-modal .modal-box { width: 360px; }
+
+  /* ===== Toast ===== */
+  #toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.2s ease;
+    max-width: 300px;
+  }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
+  .toast.warn { background: var(--warn); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ===== Misc ===== */
+  .divider { height: 1px; background: var(--border-soft); margin: 16px 0; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-text {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 50;
+    pointer-events: none;
+    margin-bottom: 4px;
+  }
+  .tooltip-wrap:hover .tooltip-text { display: block; }
+
+  .api-key-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .api-key-row input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    font-size: 12px;
+    outline: none;
+  }
+
+  .randomize-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .scale-preview-text {
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  /* Fade answered questions */
+  .question-block.answered .question-text { color: var(--text-muted); }
+  .question-block.answered .likert-btn:not(.selected) { opacity: 0.4; }
+
+  #unsupported-banner {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--surface);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 32px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== Browser Unsupported ========== -->
+<div id="unsupported-banner">
+  <div style="font-size:40px">⚠️</div>
+  <h2>浏览器版本过低</h2>
+  <p style="color:var(--text-secondary)">当前浏览器不支持所需API，请升级或使用最新版 Chrome / Edge 打开本工具。</p>
+</div>
+
+<!-- ========== Toast Container ========== -->
+<div id="toast-container"></div>
+
+<!-- ========== Top Nav ========== -->
+<div id="top-nav">
+  <h1>用户体验与人因测量平台</h1>
+  <span id="browser-check"></span>
+</div>
+
+<!-- ========== Main Layout ========== -->
+<div id="main-layout">
+
+  <!-- ===== LEFT: Resource Management ===== -->
+  <div class="col" id="col-left">
+
+    <!-- Media Section -->
+    <div class="section-label">素材管理</div>
+    <button class="folder-btn" id="btn-select-media-folder" onclick="selectMediaFolder()">
+      📁 选择素材文件夹
+    </button>
+    <div id="media-folder-path" style="font-size:11px;color:var(--text-muted);margin-bottom:8px;display:none;"></div>
+    <div class="list-controls" id="media-controls" style="display:none;">
+      <label style="font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" id="media-select-all" onchange="toggleSelectAll('media', this.checked)"> 全选
+      </label>
+      <span id="media-count-label"></span>
+    </div>
+    <ul class="resource-list" id="media-list">
+      <li class="empty-tip">请先选择素材文件夹</li>
+    </ul>
+
+    <div class="divider"></div>
+
+    <!-- Scale Section -->
+    <div class="section-label scale-subsection">量表管理</div>
+    <button class="folder-btn" id="btn-select-scale-folder" onclick="selectScaleFolder()">
+      📄 选择量表文件夹
+    </button>
+    <div id="scale-folder-path" style="font-size:11px;color:var(--text-muted);margin-bottom:8px;display:none;"></div>
+    <div id="scale-list-wrap">
+      <p class="empty-tip">请先选择量表文件夹</p>
+    </div>
+
+    <!-- Selected scales config -->
+    <div id="scale-config-section" style="margin-top:12px;display:none;">
+      <div class="block-section-label" style="margin-bottom:8px;">已选量表计分方式</div>
+      <div id="scale-config-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="setAllScoring()">统一设置计分方式</button>
+    </div>
+  </div>
+
+  <!-- ===== MIDDLE: Experiment Editor ===== -->
+  <div class="col" id="col-mid">
+    <div id="mid-placeholder" class="mid-placeholder">
+      <div class="big-icon">🧪</div>
+      <p style="font-size:14px;font-weight:500;">实验工作台</p>
+      <p style="font-size:12px;line-height:1.8;">从右侧点击「➕ 创建新实验」<br>开始组合素材与量表</p>
+    </div>
+
+    <div id="experiment-editor" class="experiment-editor" style="display:none;">
+      <div>
+        <input class="bare-input" id="exp-name" placeholder="实验名称（必填）" maxlength="60">
+        <textarea class="bare-textarea" id="exp-desc" placeholder="实验描述（选填，补充实验目的…）" rows="2"></textarea>
+      </div>
+
+      <div class="divider" style="margin:4px 0;"></div>
+
+      <label class="randomize-check">
+        <input type="checkbox" id="exp-randomize"> 随机打乱素材展示顺序
+      </label>
+
+      <!-- Unified Flow List -->
+      <div class="block-section">
+        <div class="block-section-label" style="display:flex;align-items:center;width:100%;">
+          <span>🗂 实验流程</span>
+          <span id="flow-count" class="badge" style="margin-left:6px;">0</span>
+          <span id="flow-drag-tip" style="display:none;margin-left:auto;font-size:11px;color:var(--text-muted);font-weight:400;">
+            ⠿ 拖拽自由排序
+          </span>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px;">
+          从左侧勾选素材/量表后添加到此处，可自由拖拽排序，量表可重复添加
+        </p>
+        <ul class="block-list" id="flow-list">
+          <li class="empty-block">从左侧勾选素材或量表后将出现在这里</li>
+        </ul>
+      </div>
+
+      <div style="padding-top:8px;border-top:1px solid var(--border-soft);display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn btn-ghost" onclick="cancelEditor()">取消</button>
+        <button class="btn btn-primary" onclick="openPreviewModal()">预览实验并编辑 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RIGHT: Archive & Data ===== -->
+  <div class="col" id="col-right">
+
+    <!-- Create Button -->
+    <div class="create-btn-wrap">
+      <button class="btn btn-primary btn-full" onclick="createNewExperiment()">➕ 创建新实验</button>
+    </div>
+
+    <!-- Experiment Archive -->
+    <div class="section-label">实验模板</div>
+    <ul class="experiment-list" id="experiment-archive">
+      <li class="empty-tip" id="archive-empty-tip">暂无保存的实验模板</li>
+    </ul>
+
+    <div class="divider"></div>
+
+    <!-- Data Management -->
+    <div class="data-section">
+      <!-- 筛选状态栏：始终可见，明确显示当前筛选的实验 -->
+      <div id="data-filter-bar" style="
+        display:flex;align-items:center;justify-content:space-between;
+        padding:8px 10px;border-radius:6px;margin-bottom:8px;
+        background:var(--bg);border:1px solid var(--border);
+      ">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+          <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">当前数据：</span>
+          <span id="data-filter-label" style="font-size:12px;font-weight:600;color:var(--text-muted);
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">全部实验</span>
+        </div>
+        <button id="data-filter-clear-btn" onclick="clearExpFilter()"
+          style="display:none;font-size:11px;border:none;background:transparent;
+          color:var(--danger);cursor:pointer;padding:2px 6px;white-space:nowrap;flex-shrink:0;">✕ 取消筛选</button>
+      </div>
+      <div class="data-controls" style="margin-bottom:8px;">
+        <input class="search-input" id="data-search" placeholder="搜索被试编号/时间…" oninput="renderDataTable()">
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()" title="导出当前筛选的数据为CSV">⬇ 导出CSV</button>
+        <button class="btn btn-danger btn-sm" onclick="batchDeleteData()">删除</button>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table" id="data-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="data-select-all" onchange="toggleDataSelectAll(this.checked)"></th>
+              <th onclick="sortData('subjectId')">被试编号 ↕</th>
+              <th>性别/年龄</th>
+              <th onclick="sortData('testTime')">测试时间 ↕</th>
+            </tr>
+          </thead>
+          <tbody id="data-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="data-pagination"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== Experiment Execution Screen ===== -->
+<div id="exec-screen">
+  <div class="exec-header">
+    <span class="exec-title" id="exec-exp-title">实验进行中</span>
+    <span class="exec-progress" id="exec-progress-label"></span>
+  </div>
+  <div class="exec-body" id="exec-body"></div>
+  <div class="exec-footer" id="exec-footer"></div>
+</div>
+
+<!-- ===== Media Preview Modal ===== -->
+<div class="modal-overlay" id="media-preview-modal" style="display:none;" onclick="if(event.target===this)closeModal('media-preview-modal')">
+  <div class="modal-box" style="width:80vw;max-width:960px;">
+    <div class="modal-header">
+      <h3 id="media-preview-title">素材预览</h3>
+      <button class="modal-close" onclick="closeModal('media-preview-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="media-preview-body" style="display:flex;align-items:center;justify-content:center;min-height:300px;"></div>
+  </div>
+</div>
+
+<!-- ===== Scale Preview Modal ===== -->
+<div class="modal-overlay" id="scale-preview-modal" style="display:none;" onclick="if(event.target===this)closeModal('scale-preview-modal')">
+  <div class="modal-box" style="width:560px;">
+    <div class="modal-header">
+      <h3 id="scale-preview-title">量表预览</h3>
+      <button class="modal-close" onclick="closeModal('scale-preview-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="scale-preview-text" id="scale-preview-text"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Experiment Preview / Edit Modal ===== -->
+<div class="modal-overlay" id="preview-modal" style="display:none;" onclick="if(event.target===this){}">
+  <div class="modal-box" id="preview-modal-box" style="width:800px;max-width:96vw;max-height:90vh;">
+    <div class="modal-header">
+      <h3 id="preview-modal-title">预览实验并编辑</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="api-key-row" style="margin-top:0;">
+          <input type="password" id="api-key-input" placeholder="输入 Claude API Key 以启用AI清洗" style="width:220px;">
+          <button class="btn btn-ghost btn-sm" onclick="aiCleanQuestions()">🤖 AI智能提取</button>
+        </div>
+        <button class="modal-close" onclick="closeModal('preview-modal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="preview-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('preview-modal')">取消修改</button>
+      <button class="btn btn-primary" onclick="confirmGenerateExperiment()">确定生成实验 ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Subject Info Modal ===== -->
+<div class="modal-overlay" id="subject-modal" style="display:none;" onclick="if(event.target===this){}">
+  <div class="modal-box" style="width:400px;">
+    <div class="modal-header">
+      <h3>被试信息录入</h3>
+      <button class="modal-close" onclick="closeModal('subject-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>被试编号 <span style="color:var(--danger)">*</span></label>
+        <input class="form-control" id="subject-id" placeholder="如：P001" required>
+      </div>
+      <div class="form-group">
+        <label>年龄</label>
+        <input class="form-control" id="subject-age" type="number" placeholder="选填" min="1" max="120">
+      </div>
+      <div class="form-group">
+        <label>性别</label>
+        <select class="form-control" id="subject-gender">
+          <option value="">请选择（选填）</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-full" onclick="submitSubjectInfo()">开始实验 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirm Modal ===== -->
+<div class="modal-overlay" id="confirm-modal" style="display:none;" onclick="if(event.target===this){}">
+  <div class="modal-box" style="width:360px;">
+    <div class="modal-header">
+      <h3 id="confirm-title">确认操作</h3>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-message" style="font-size:14px;line-height:1.7;color:var(--text-secondary);"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="confirm-cancel-btn" onclick="closeModal('confirm-modal')">取消</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+const state = {
+  // Media
+  mediaFiles: [],          // { name, size, type, file }
+  selectedMedia: new Set(), // file names
+
+  // Scales
+  scaleFiles: [],          // { name, rawText, questions }
+  selectedScales: new Set(), // scale names
+  scaleScoring: {},        // { scaleName: '5点' | '7点' }
+
+  // Current experiment being edited
+  currentExp: null,        // { name, desc, mediaOrder, scaleOrder, randomize, scaleQuestions }
+
+  // Saved experiments
+  savedExperiments: [],    // from localStorage
+
+  // Data
+  testData: [],            // from IndexedDB
+  dataPage: 1,
+  dataSort: { key: 'testTime', dir: -1 },
+  dataSelected: new Set(),
+  activeFilterExpId: null, // 当前点选过滤的实验ID，null表示显示全部
+
+  // Execution
+  execContext: null,
+
+  // Subject (current)
+  currentSubject: null,
+};
+
+// ============================================================
+// INIT
+// ============================================================
+(function init() {
+  // Check browser support
+  if (!window.indexedDB || !window.File || !window.FileReader) {
+    document.getElementById('unsupported-banner').style.display = 'flex';
+    return;
+  }
+  initDB();
+  loadSavedExperiments();
+  renderArchive();
+})();
+
+// ============================================================
+// INDEXED DB
+// ============================================================
+let db;
+function initDB() {
+  const req = indexedDB.open('ux_platform_db', 1);
+  req.onupgradeneeded = e => {
+    const d = e.target.result;
+    if (!d.objectStoreNames.contains('test_records')) {
+      const store = d.createObjectStore('test_records', { keyPath: 'testId' });
+      store.createIndex('experimentName', 'experimentName', { unique: false });
+      store.createIndex('testTime', 'testTime', { unique: false });
+    }
+  };
+  req.onsuccess = e => {
+    db = e.target.result;
+    loadAllTestData();
+  };
+  req.onerror = () => toast('IndexedDB 初始化失败', 'error');
+}
+
+function saveTestRecord(record) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('test_records', 'readwrite');
+    tx.objectStore('test_records').put(record);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej();
+  });
+}
+
+function loadAllTestData() {
+  const tx = db.transaction('test_records', 'readonly');
+  const req = tx.objectStore('test_records').getAll();
+  req.onsuccess = e => {
+    state.testData = e.target.result || [];
+    renderArchive(); // 更新每个实验的数据条数
+    renderDataTable();
+    updateFilterBar();
+  };
+}
+
+function deleteTestRecord(testId) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('test_records', 'readwrite');
+    tx.objectStore('test_records').delete(testId);
+    tx.oncomplete = res;
+    tx.onerror = rej;
+  });
+}
+
+// ============================================================
+// LOCAL STORAGE: Experiments
+// ============================================================
+function loadSavedExperiments() {
+  try {
+    state.savedExperiments = JSON.parse(localStorage.getItem('ux_experiments') || '[]');
+  } catch { state.savedExperiments = []; }
+}
+
+function persistExperiments() {
+  localStorage.setItem('ux_experiments', JSON.stringify(state.savedExperiments));
+}
+
+// ============================================================
+// MEDIA FOLDER SELECTION
+// ============================================================
+async function selectMediaFolder() {
+  if (!window.showDirectoryPicker) {
+    // Fallback: file input
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.multiple = true;
+    inp.accept = 'image/jpeg,image/png,image/jpg,video/mp4,video/webm';
+    inp.onchange = () => {
+      const files = Array.from(inp.files);
+      if (!files.length) return;
+      processMediaFiles(files);
+    };
+    inp.click();
+    return;
+  }
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    const files = [];
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind === 'file') {
+        const f = await entry.getFile();
+        if (/\.(jpg|jpeg|png|mp4|webm)$/i.test(f.name)) files.push(f);
+      }
+    }
+    processMediaFiles(files, dirHandle.name);
+  } catch (e) {
+    if (e.name !== 'AbortError') toast('读取文件夹失败', 'error');
+  }
+}
+
+function processMediaFiles(files, dirName) {
+  if (!files.length) {
+    toast('该文件夹内无可用素材，请重新选择', 'warn');
+    return;
+  }
+  state.mediaFiles = files.map(f => ({
+    name: f.name,
+    size: formatSize(f.size),
+    type: /\.(mp4|webm)$/i.test(f.name) ? 'video' : 'image',
+    file: f,
+    url: URL.createObjectURL(f),
+  }));
+  state.selectedMedia.clear();
+  if (dirName) {
+    const el = document.getElementById('media-folder-path');
+    el.textContent = '📂 ' + dirName;
+    el.style.display = 'block';
+  }
+  document.getElementById('media-controls').style.display = 'flex';
+  renderMediaList();
+  toast(`已加载 ${state.mediaFiles.length} 个素材`, 'success');
+}
+
+function renderMediaList() {
+  const ul = document.getElementById('media-list');
+  const label = document.getElementById('media-count-label');
+  if (!state.mediaFiles.length) {
+    ul.innerHTML = '<li class="empty-tip">无可用素材</li>';
+    return;
+  }
+  label.textContent = `共 ${state.mediaFiles.length} 个`;
+  ul.innerHTML = state.mediaFiles.map((m, i) => `
+    <li class="resource-item${state.selectedMedia.has(m.name) ? ' selected' : ''}" 
+        title="${m.name}">
+      <input type="checkbox" ${state.selectedMedia.has(m.name) ? 'checked' : ''}
+             onchange="toggleMediaSelect('${escHtml(m.name)}', this.checked)">
+      <span class="item-name">${m.type === 'image' ? '🖼' : '🎬'} ${escHtml(m.name)}</span>
+      <span class="item-meta">${m.size}</span>
+      <div class="item-actions">
+        <button class="icon-btn" title="预览" onclick="previewMedia(${i})">👁</button>
+        <button class="icon-btn" title="选择/取消" onclick="toggleMediaSelect('${escHtml(m.name)}', !document.getElementById('mchk${i}').checked)">＋</button>
+      </div>
+    </li>
+  `).join('');
+  syncEditorBlocks();
+}
+
+function toggleMediaSelect(name, checked) {
+  if (checked) state.selectedMedia.add(name);
+  else {
+    state.selectedMedia.delete(name);
+    // Remove all media instances from flow
+    if (state.currentExp) {
+      state.currentExp.flowSteps = state.currentExp.flowSteps.filter(s => !(s.type==='media' && s.name===name));
+    }
+  }
+  renderMediaList();
+  syncEditorBlocks();
+  document.getElementById('media-select-all').checked =
+    state.selectedMedia.size === state.mediaFiles.length && state.mediaFiles.length > 0;
+}
+
+function toggleSelectAll(type, checked) {
+  if (type === 'media') {
+    if (checked) state.mediaFiles.forEach(m => state.selectedMedia.add(m.name));
+    else state.selectedMedia.clear();
+    renderMediaList();
+    // 同步全选框状态
+    const cb = document.getElementById('media-select-all');
+    if (cb) cb.checked = checked;
+  } else {
+    if (checked) state.scaleFiles.forEach(s => state.selectedScales.add(s.name));
+    else state.selectedScales.clear();
+    renderScaleList();
+    // 同步全选框状态
+    const cb = document.getElementById('scale-select-all');
+    if (cb) cb.checked = checked;
+  }
+  syncEditorBlocks();
+}
+
+// ============================================================
+// SCALE FOLDER SELECTION
+// ============================================================
+async function selectScaleFolder() {
+  if (!window.showDirectoryPicker) {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.multiple = true;
+    inp.accept = '.txt';
+    inp.onchange = async () => {
+      const files = Array.from(inp.files).filter(f => /\.txt$/i.test(f.name));
+      if (!files.length) { toast('该文件夹内无可用量表，请重新选择', 'warn'); return; }
+      await processScaleFiles(files);
+    };
+    inp.click();
+    return;
+  }
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    const files = [];
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind === 'file' && /\.txt$/i.test(entry.name)) {
+        files.push(await entry.getFile());
+      }
+    }
+    if (!files.length) { toast('该文件夹内无可用量表，请重新选择', 'warn'); return; }
+    await processScaleFiles(files, dirHandle.name);
+  } catch (e) {
+    if (e.name !== 'AbortError') toast('读取量表文件夹失败', 'error');
+  }
+}
+
+async function processScaleFiles(files, dirName) {
+  state.scaleFiles = [];
+  for (const f of files) {
+    const rawText = await f.text();
+    const questions = parseScaleQuestions(rawText);
+    const displayName = f.name.replace(/\.txt$/i, '');
+    state.scaleFiles.push({ name: displayName, rawText, questions });
+    if (!state.scaleScoring[displayName]) state.scaleScoring[displayName] = '5点';
+  }
+  state.selectedScales.clear();
+  if (dirName) {
+    const el = document.getElementById('scale-folder-path');
+    el.textContent = '📂 ' + dirName;
+    el.style.display = 'block';
+  }
+  renderScaleList();
+  toast(`已加载 ${state.scaleFiles.length} 个量表`, 'success');
+}
+
+// Smart question parsing (three layers)
+function parseScaleQuestions(rawText) {
+  const lines = rawText.split('\n');
+
+  // 第一道：过滤空行
+  const nonEmpty = lines.map(l => l.trim()).filter(l => l.length > 0);
+
+  // 辅助：清洗行首的列表符号和序号前缀，只保留题目正文
+  function stripPrefix(line) {
+    return line
+      // 去除行首数字序号：1. / 1、/ 1) / 1） / (1) / （1）
+      .replace(/^[\(（]?\d+[\)）\.\s、。]\s*/u, '')
+      // 去除行首字母序号：A. / a) 等
+      .replace(/^[A-Za-z][\.\)]\s+/, '')
+      // 去除行首常见列表符：• · * - — ▪ ○ ● ✓ ✔ ► ▶
+      .replace(/^[•·*\-—▪○●✓✔►▶➢➤]+\s*/u, '')
+      // 再次去除可能的残留数字序号（双层嵌套情况）
+      .replace(/^\d+[\.\s、）)]\s*/, '')
+      .trim();
+  }
+
+  // 判断一行是否像"标题/说明/指导语"而非题目
+  function isLikelyNoise(line) {
+    const stripped = stripPrefix(line);
+    // 纯数字
+    if (/^\d+$/.test(stripped)) return true;
+    // 极短（≤3字）且不含汉字
+    if (stripped.length <= 3 && !/[\u4e00-\u9fa5]/.test(stripped)) return true;
+    // 明显标题特征词
+    if (/^(【.+】|《.+》|\[.+\]|（.+）)$/.test(stripped)) return true;
+    // 指导语关键词开头
+    if (/^(请|注意|说明|指导|以下|本问卷|填写|根据|对于以下|填表|总分|平均|量表|问卷|评分)/.test(stripped) && stripped.length < 25) return true;
+    // 非常短的纯标点或符号行
+    if (stripped.length <= 2) return true;
+    return false;
+  }
+
+  // 第二道：尝试用正则提取有序号或bullet的行
+  // 更宽松的正则：允许bullet紧贴文字（无空格）
+  const bulletReg = /^[\s]*([•·*\-—▪○●]|[\(（]?\d+[\)）\.\s、。]|[A-Za-z][\.\)])\s*([\s\S]+)/u;
+
+  const extracted = nonEmpty.map(l => {
+    const m = l.trim().match(bulletReg);
+    if (m) {
+      const text = stripPrefix(l.trim());
+      return text.length > 3 ? text : null;
+    }
+    return null;
+  }).filter(Boolean);
+
+  // 如果提取到足够题目，用提取结果，再过滤噪声
+  if (extracted.length >= 2) {
+    return extracted.filter(t => !isLikelyNoise(t));
+  }
+
+  // Fallback：所有非空行都清洗后过滤噪声
+  return nonEmpty
+    .map(l => stripPrefix(l))
+    .filter(l => l.length > 4 && !isLikelyNoise(l));
+}
+
+function renderScaleList() {
+  const wrap = document.getElementById('scale-list-wrap');
+  if (!state.scaleFiles.length) {
+    wrap.innerHTML = '<p class="empty-tip">无可用量表</p>';
+    document.getElementById('scale-config-section').style.display = 'none';
+    return;
+  }
+  // Count how many times each scale appears in the flow
+  const flowSteps = state.currentExp ? state.currentExp.flowSteps : [];
+  const scaleCountInFlow = {};
+  flowSteps.forEach(step => {
+    if (step.type === 'scale') {
+      scaleCountInFlow[step.name] = (scaleCountInFlow[step.name] || 0) + 1;
+    }
+  });
+
+  wrap.innerHTML = `
+    <div class="list-controls">
+      <label style="font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" id="scale-select-all" onchange="toggleSelectAll('scale', this.checked)"> 全选
+      </label>
+      <span style="font-size:12px;color:var(--text-muted);">共 ${state.scaleFiles.length} 个</span>
+    </div>
+    <ul class="resource-list">
+      ${state.scaleFiles.map((s, i) => {
+        const isSelected = state.selectedScales.has(s.name);
+        const cnt = scaleCountInFlow[s.name] || 0;
+        return `
+        <li class="resource-item${isSelected ? ' selected' : ''}">
+          <input type="checkbox" ${isSelected ? 'checked' : ''}
+                 onchange="toggleScaleSelect('${escHtml(s.name)}', this.checked)">
+          ${cnt > 0
+            ? `<span style="font-size:11px;font-weight:700;color:var(--accent);
+                background:var(--accent-light);border-radius:3px;
+                padding:1px 5px;flex-shrink:0;min-width:20px;text-align:center;">${cnt}次</span>`
+            : `<span style="min-width:20px;"></span>`}
+          <span class="item-name">📋 ${escHtml(s.name)}</span>
+          <span class="item-meta">${s.questions.length}题</span>
+          <div class="item-actions">
+            <button class="icon-btn" title="预览" onclick="previewScale(${i})">👁</button>
+            ${isSelected
+              ? `<button class="icon-btn" title="再次添加到流程末尾" onclick="addScaleAgain('${escHtml(s.name)}')" style="font-size:11px;">+1</button>`
+              : ''}
+          </div>
+        </li>`;
+      }).join('')}
+    </ul>
+  `;
+  renderScaleConfig();
+}
+
+function toggleScaleSelect(name, checked) {
+  if (checked) state.selectedScales.add(name);
+  else {
+    state.selectedScales.delete(name);
+    // Remove all scale instances from flow
+    if (state.currentExp) {
+      state.currentExp.flowSteps = state.currentExp.flowSteps.filter(s => !(s.type==='scale' && s.name===name));
+    }
+  }
+  syncEditorBlocks();
+  renderScaleList();
+  renderScaleConfig();
+}
+
+function renderScaleConfig() {
+  const section = document.getElementById('scale-config-section');
+  const list = document.getElementById('scale-config-list');
+  if (!state.selectedScales.size) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = [...state.selectedScales].map(name => `
+    <div class="scale-item-config">
+      <span title="${escHtml(name)}">${escHtml(name)}</span>
+      <select onchange="state.scaleScoring['${escHtml(name)}'] = this.value; syncEditorBlocks();">
+        <option value="5点" ${state.scaleScoring[name]==='5点'?'selected':''}>5点李克特</option>
+        <option value="7点" ${state.scaleScoring[name]==='7点'?'selected':''}>7点李克特</option>
+      </select>
+    </div>
+  `).join('');
+}
+
+function setAllScoring() {
+  const val = prompt('统一设置计分方式：输入 5 或 7');
+  if (val === '5' || val === '7') {
+    [...state.selectedScales].forEach(n => state.scaleScoring[n] = val + '点');
+    renderScaleConfig();
+    toast(`已统一设为 ${val} 点李克特`, 'success');
+  }
+}
+
+// ============================================================
+// PREVIEW MEDIA / SCALE
+// ============================================================
+function previewMedia(idx) {
+  const m = state.mediaFiles[idx];
+  document.getElementById('media-preview-title').textContent = m.name;
+  const body = document.getElementById('media-preview-body');
+  if (m.type === 'image') {
+    body.innerHTML = `<img src="${m.url}" class="preview-img" style="max-height:70vh;object-fit:contain;">`;
+  } else {
+    body.innerHTML = `<video src="${m.url}" class="preview-video" controls autoplay></video>`;
+  }
+  openModal('media-preview-modal');
+}
+
+function previewScale(idx) {
+  const s = state.scaleFiles[idx];
+  document.getElementById('scale-preview-title').textContent = s.name;
+  document.getElementById('scale-preview-text').textContent = s.rawText;
+  openModal('scale-preview-modal');
+}
+
+// ============================================================
+// EXPERIMENT EDITOR
+// ============================================================
+function createNewExperiment() {
+  state.currentExp = {
+    name: '',
+    desc: '',
+    flowSteps: [], // [{ type:'media'|'scale', name, instanceId }]
+    randomize: false,
+    scaleQuestions: {}, // { scaleName: [{ text, removed }] }
+  };
+  document.getElementById('exp-name').value = '';
+  document.getElementById('exp-desc').value = '';
+  document.getElementById('exp-randomize').checked = false;
+  document.getElementById('mid-placeholder').style.display = 'none';
+  document.getElementById('experiment-editor').style.display = 'flex';
+  syncEditorBlocks();
+}
+
+function cancelEditor() {
+  document.getElementById('mid-placeholder').style.display = 'flex';
+  document.getElementById('experiment-editor').style.display = 'none';
+  state.currentExp = null;
+}
+
+function syncEditorBlocks() {
+  // 如果还没有创建实验，自动打开编辑器
+  if (!state.currentExp) {
+    if (state.selectedMedia.size > 0 || state.selectedScales.size > 0) {
+      // 自动创建一个新实验并打开中间面板
+      state.currentExp = {
+        name: '',
+        desc: '',
+        flowSteps: [],
+        randomize: false,
+        scaleQuestions: {},
+      };
+      document.getElementById('mid-placeholder').style.display = 'none';
+      document.getElementById('experiment-editor').style.display = 'flex';
+    } else {
+      return;
+    }
+  }
+
+  const steps = state.currentExp.flowSteps;
+
+  // 移除已取消勾选的节点
+  state.currentExp.flowSteps = steps.filter(step => {
+    if (step.type === 'media') return state.selectedMedia.has(step.name);
+    if (step.type === 'scale') return state.selectedScales.has(step.name);
+    return false;
+  });
+
+  // 追加新勾选的素材（每个只加一次）
+  state.selectedMedia.forEach(name => {
+    if (!state.currentExp.flowSteps.some(s => s.type === 'media' && s.name === name)) {
+      state.currentExp.flowSteps.push({ type: 'media', name, instanceId: 'media_' + name });
+    }
+  });
+  // 追加新勾选的量表（每个只加一次）
+  state.selectedScales.forEach(name => {
+    if (!state.currentExp.flowSteps.some(s => s.type === 'scale' && s.name === name)) {
+      state.currentExp.flowSteps.push({ type: 'scale', name, instanceId: 'scale_' + name + '_' + Date.now() });
+    }
+  });
+
+  renderEditorBlocks();
+}
+
+// 重复添加同一量表到流程末尾
+function addScaleAgain(name) {
+  if (!state.currentExp) return;
+  const instanceId = 'scale_' + name + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  state.currentExp.flowSteps.push({ type: 'scale', name, instanceId });
+  renderEditorBlocks();
+  renderScaleList();
+  toast(`已再次添加「${name}」到流程末尾`, 'success');
+}
+
+let sortableFlow;
+function renderEditorBlocks() {
+  const flowList = document.getElementById('flow-list');
+  const flowDragTip = document.getElementById('flow-drag-tip');
+  const steps = state.currentExp.flowSteps;
+
+  document.getElementById('flow-count').textContent = steps.length;
+  if (flowDragTip) flowDragTip.style.display = steps.length > 1 ? 'inline' : 'none';
+
+  if (!steps.length) {
+    flowList.innerHTML = '<li class="empty-block">从左侧勾选素材或量表后将出现在这里</li>';
+  } else {
+    flowList.innerHTML = steps.map((step, idx) => {
+      if (step.type === 'media') {
+        const m = state.mediaFiles.find(f => f.name === step.name);
+        const icon = m ? (m.type==='image'?'🖼':'🎬') : '⚠️';
+        const nameStyle = m ? '' : 'color:var(--warn);';
+        const hint = m ? '' : ' <span style="font-size:10px;color:var(--warn);">（需重新加载文件夹）</span>';
+        return `<li class="block-card" data-instance="${escHtml(step.instanceId)}">
+          <span class="drag-handle" title="拖拽排序">⠿</span>
+          <span class="card-seq" style="
+            font-size:11px;font-weight:700;color:var(--text-muted);
+            min-width:22px;text-align:center;flex-shrink:0;">${idx+1}</span>
+          <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#e3f2fd;color:#1565c0;flex-shrink:0;">素材</span>
+          <span class="card-name" style="${nameStyle}">${icon} ${escHtml(step.name)}${hint}</span>
+          <button class="card-remove" onclick="removeFlowStep('${escHtml(step.instanceId)}')">✕</button>
+        </li>`;
+      } else {
+        const scoring = state.scaleScoring[step.name] || '5点';
+        const scaleLoaded = state.scaleFiles.some(s => s.name === step.name);
+        const sameScaleBefore = steps.slice(0, idx).filter(s => s.type==='scale' && s.name===step.name).length;
+        const totalSameScale = steps.filter(s => s.type==='scale' && s.name===step.name).length;
+        const repeatLabel = totalSameScale > 1 ? ` <span style="font-size:10px;color:var(--text-muted);">(第${sameScaleBefore+1}次)</span>` : '';
+        const notLoadedHint = scaleLoaded ? '' : ' <span style="font-size:10px;color:var(--warn);">（需重新加载文件夹）</span>';
+        return `<li class="block-card" data-instance="${escHtml(step.instanceId)}">
+          <span class="drag-handle" title="拖拽排序">⠿</span>
+          <span class="card-seq" style="
+            font-size:11px;font-weight:700;color:var(--accent);
+            min-width:22px;text-align:center;flex-shrink:0;
+            background:var(--accent-light);border-radius:3px;padding:1px 5px;">${idx+1}</span>
+          <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#f3e5f5;color:#6a1b9a;flex-shrink:0;">量表</span>
+          <span class="card-name">📋 ${escHtml(step.name)}${repeatLabel}${notLoadedHint}</span>
+          <span class="card-meta">${scoring}李克特</span>
+          <button class="card-remove" onclick="removeFlowStep('${escHtml(step.instanceId)}')">✕</button>
+        </li>`;
+      }
+    }).join('');
+  }
+
+  // 始终销毁旧实例再重建，确保 DOM 更新后拖拽正常
+  if (sortableFlow) { sortableFlow.destroy(); sortableFlow = null; }
+  if (steps.length >= 1) {
+    sortableFlow = Sortable.create(flowList, {
+      handle: '.drag-handle',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      onEnd: () => {
+        // 直接从当前 DOM 读取顺序，不依赖闭包变量
+        const newOrder = [...flowList.querySelectorAll('[data-instance]')].map(el => el.dataset.instance);
+        const currentSteps = state.currentExp.flowSteps;
+        state.currentExp.flowSteps = newOrder
+          .map(iid => currentSteps.find(s => s.instanceId === iid))
+          .filter(Boolean);
+        // 刷新序号
+        flowList.querySelectorAll('.card-seq').forEach((el, i) => { el.textContent = i + 1; });
+        renderScaleList();
+      }
+    });
+  }
+}
+
+function removeFlowStep(instanceId) {
+  if (!state.currentExp) return;
+  const step = state.currentExp.flowSteps.find(s => s.instanceId === instanceId);
+  if (!step) return;
+  state.currentExp.flowSteps = state.currentExp.flowSteps.filter(s => s.instanceId !== instanceId);
+  // If no more instances of this item, deselect from left panel
+  const remainingOfSame = state.currentExp.flowSteps.filter(s => s.name === step.name && s.type === step.type);
+  if (!remainingOfSame.length) {
+    if (step.type === 'media') state.selectedMedia.delete(step.name);
+    else state.selectedScales.delete(step.name);
+    renderMediaList();
+    renderScaleList();
+    renderScaleConfig();
+  }
+  renderEditorBlocks();
+  renderScaleList();
+}
+
+// ============================================================
+// PREVIEW MODAL
+// ============================================================
+function openPreviewModal() {
+  const name = document.getElementById('exp-name').value.trim();
+  if (!name) { toast('请填写实验名称', 'warn'); document.getElementById('exp-name').focus(); return; }
+  const steps = state.currentExp.flowSteps;
+  const hasMedia = steps.some(s => s.type === 'media');
+  const hasScale = steps.some(s => s.type === 'scale');
+  if (!hasMedia || !hasScale) {
+    toast('请至少添加1个素材和1个量表', 'warn'); return;
+  }
+  state.currentExp.name = name;
+  state.currentExp.desc = document.getElementById('exp-desc').value.trim();
+  state.currentExp.randomize = document.getElementById('exp-randomize').checked;
+
+  // Initialize scaleQuestions for each unique scale name
+  const uniqueScales = [...new Set(steps.filter(s=>s.type==='scale').map(s=>s.name))];
+  uniqueScales.forEach(sName => {
+    if (!state.currentExp.scaleQuestions[sName]) {
+      const sf = state.scaleFiles.find(s => s.name === sName);
+      state.currentExp.scaleQuestions[sName] = sf
+        ? sf.questions.map(q => ({ text: q, removed: false }))
+        : [];
+    }
+  });
+
+  renderPreviewModal();
+  openModal('preview-modal');
+}
+
+function renderPreviewModal() {
+  const body = document.getElementById('preview-modal-body');
+  const titleEl = document.getElementById('preview-modal-title');
+  if (titleEl) titleEl.textContent = `${state.currentExp.name} — 预览与编辑`;
+
+  const steps = state.currentExp.flowSteps;
+  let html = `<p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.8;">
+    点击题目文字可编辑 · 悬停行显示 🗑 可移除误识别题项 · 移除不影响源文件
+  </p>`;
+
+  html += `<div class="preview-section"><div class="preview-section-title">实验流程（${steps.length}个节点）</div>`;
+
+  const scaleInstanceCount = {};
+  steps.forEach((step, idx) => {
+    if (step.type === 'media') {
+      const m = state.mediaFiles.find(f => f.name === step.name);
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;
+        border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;background:var(--bg);">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);min-width:22px;">${idx+1}</span>
+        <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#e3f2fd;color:#1565c0;">素材</span>
+        ${m && m.type==='image' ? `<img src="${m.url}" style="height:40px;border-radius:4px;object-fit:cover;">` : '<span style="font-size:20px;">🎬</span>'}
+        <span style="font-size:13px;">${escHtml(step.name)}</span>
+      </div>`;
+    } else {
+      scaleInstanceCount[step.name] = (scaleInstanceCount[step.name] || 0);
+      const instanceIdx = scaleInstanceCount[step.name];
+      scaleInstanceCount[step.name]++;
+      const questions = state.currentExp.scaleQuestions[step.name] || [];
+      const scoring = state.scaleScoring[step.name] || '5点';
+      const totalInstances = steps.filter(s=>s.type==='scale'&&s.name===step.name).length;
+      const repeatHint = totalInstances > 1 ? `（第${instanceIdx+1}次）` : '';
+
+      html += `<div class="preview-scale-block" style="margin-bottom:12px;">
+        <div class="preview-scale-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);min-width:22px;">${idx+1}</span>
+          <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#f3e5f5;color:#6a1b9a;">量表</span>
+          📋 ${escHtml(step.name)}${repeatHint}
+          <span style="font-size:11px;font-weight:400;color:var(--text-muted);">${scoring}李克特</span>
+        </div>`;
+
+      questions.forEach((q, qi) => {
+        if (q.removed) return;
+        html += `<div class="preview-question-row" id="pq-${escHtml(step.name)}-${qi}">
+          <span style="color:var(--text-muted);font-size:12px;min-width:28px;flex-shrink:0;">${qi+1}.</span>
+          <input type="text" class="preview-q-input"
+                 data-scale="${escHtml(step.name)}" data-qi="${qi}"
+                 placeholder="题目文字"
+                 style="flex:1;border:1px solid transparent;border-radius:4px;padding:4px 8px;
+                        font-size:13px;font-family:inherit;outline:none;background:transparent;
+                        cursor:text;transition:border-color 0.15s,background 0.15s;line-height:1.6;"
+                 onmouseover="this.style.borderColor='var(--border)';this.style.background='var(--bg)'"
+                 onmouseout="if(document.activeElement!==this){this.style.borderColor='transparent';this.style.background='transparent'}"
+                 onfocus="this.style.borderColor='var(--accent)';this.style.background='var(--surface)'"
+                 onblur="this.style.borderColor='transparent';this.style.background='transparent';updateQuestionText(this)"
+                 oninput="updateQuestionText(this)">
+          <button class="remove-q-btn" title="移除此项（仅对当前实验生效）"
+                  onclick="removeQuestion('${escHtml(step.name)}',${qi})">🗑 移除</button>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+  });
+  html += `</div>`;
+  body.innerHTML = html;
+
+  body.querySelectorAll('.preview-q-input').forEach(inp => {
+    const sName = inp.dataset.scale;
+    const qi = parseInt(inp.dataset.qi);
+    inp.value = (state.currentExp.scaleQuestions[sName][qi] || {}).text || '';
+  });
+}
+
+function updateQuestionText(el) {
+  const sName = el.dataset.scale;
+  const qi = parseInt(el.dataset.qi);
+  if (state.currentExp.scaleQuestions[sName] && state.currentExp.scaleQuestions[sName][qi]) {
+    state.currentExp.scaleQuestions[sName][qi].text = el.value.trim() || el.value;
+  }
+}
+
+function removeQuestion(sName, qi) {
+  state.currentExp.scaleQuestions[sName][qi].removed = true;
+  // 重新渲染预览以更新序号
+  renderPreviewModal();
+  toast('已移除该题项（仅对当前实验生效）', 'success');
+}
+
+// AI Clean
+async function aiCleanQuestions() {
+  const apiKey = document.getElementById('api-key-input').value.trim();
+  if (!apiKey) { toast('请先输入 Claude API Key', 'warn'); return; }
+
+  const uniqueScaleNames = [...new Set(state.currentExp.flowSteps.filter(s=>s.type==='scale').map(s=>s.name))];
+  const allTexts = uniqueScaleNames.map(sName => {
+    const sf = state.scaleFiles.find(s => s.name === sName);
+    return sf ? `【${sName}】\n${sf.rawText}` : '';
+  }).join('\n\n---\n\n');
+
+  const prompt = `以下是多个心理学/用户体验量表的原始文本。请从中精准提取每个量表的题目题干（去除标题、说明、指导语、注释），以JSON格式返回，格式为：{"量表名1":["题目1","题目2",...],"量表名2":[...]}。只返回JSON，不要其他文字。\n\n${allTexts}`;
+
+  toast('AI 分析中，请稍候…');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await resp.json();
+    const text = (data.content || []).map(b => b.text || '').join('');
+    const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+    uniqueScaleNames.forEach(sName => {
+      if (json[sName]) {
+        state.currentExp.scaleQuestions[sName] = json[sName].map(q => ({ text: q, removed: false }));
+      }
+    });
+    renderPreviewModal();
+    toast('AI 清洗完成！', 'success');
+  } catch (e) {
+    toast('AI 清洗失败：' + (e.message || '请检查API Key和网络'), 'error');
+  }
+}
+
+function confirmGenerateExperiment() {
+  document.querySelectorAll('#preview-modal-body .preview-q-input').forEach(inp => {
+    updateQuestionText(inp);
+  });
+
+  const steps = state.currentExp.flowSteps;
+  // Derive mediaOrder and scaleOrder for backwards compat with execution/export
+  const mediaOrder = steps.filter(s=>s.type==='media').map(s=>s.name);
+  const scaleOrder = [...new Set(steps.filter(s=>s.type==='scale').map(s=>s.name))];
+
+  const expData = {
+    id: Date.now().toString(),
+    name: state.currentExp.name,
+    desc: state.currentExp.desc,
+    flowSteps: JSON.parse(JSON.stringify(steps)),
+    mediaOrder,
+    scaleOrder,
+    randomize: state.currentExp.randomize,
+    scaleScoring: { ...state.scaleScoring },
+    scaleQuestions: JSON.parse(JSON.stringify(state.currentExp.scaleQuestions)),
+    savedAt: formatDateTime(new Date()),
+  };
+
+  // 检查是否在编辑已有实验（update）还是新建（insert）
+  const existingIdx = state.savedExperiments.findIndex(e => e.id === state.currentExp.id);
+  if (existingIdx >= 0) {
+    state.savedExperiments[existingIdx] = { ...expData, id: state.currentExp.id };
+  } else {
+    state.savedExperiments.unshift(expData);
+  }
+  persistExperiments();
+  renderArchive();
+  closeModal('preview-modal');
+  cancelEditor();
+  toast('实验已保存至模板库 ✓', 'success');
+}
+
+// ============================================================
+// ARCHIVE
+// ============================================================
+function renderArchive() {
+  const ul = document.getElementById('experiment-archive');
+  if (!state.savedExperiments.length) {
+    ul.innerHTML = '<li class="empty-tip" id="archive-empty-tip">暂无保存的实验模板</li>';
+    state.activeFilterExpId = null;
+    updateFilterBar();
+    renderDataTable();
+    return;
+  }
+  ul.innerHTML = state.savedExperiments.map(exp => {
+    const isActive = state.activeFilterExpId === exp.id;
+    const count = state.testData.filter(r => r.experimentName === exp.name).length;
+    return `
+    <li class="experiment-list-item${isActive ? ' active' : ''}" id="expitem-${exp.id}"
+        onclick="toggleExpFilter('${exp.id}')" style="cursor:pointer;${isActive ? 'border-color:var(--accent);background:var(--accent-light);' : ''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+        <div class="exp-item-title" style="${isActive ? 'color:var(--accent);' : ''}">${escHtml(exp.name)}</div>
+        <span style="font-size:11px;color:${isActive?'var(--accent)':'var(--text-muted)'};
+          background:${isActive?'rgba(26,26,46,0.08)':'var(--bg)'};
+          padding:1px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap;margin-top:1px;">${count} 条</span>
+      </div>
+      <div class="exp-item-meta">${exp.mediaOrder.length} 素材 · ${exp.scaleOrder.length} 量表 · ${exp.savedAt}</div>
+      <div class="exp-item-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm" onclick="loadExperiment('${exp.id}')">编辑</button>
+        <button class="btn btn-primary btn-sm" onclick="startExperiment('${exp.id}')">开始测试</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteExperiment('${exp.id}')">删除</button>
+      </div>
+      ${isActive ? `<div style="font-size:11px;color:var(--accent);margin-top:4px;">▼ 点击取消筛选</div>` : ''}
+    </li>`;
+  }).join('');
+}
+
+// 点击实验条目：过滤数据；再次点击：取消过滤
+// 点击实验条目切换过滤
+function toggleExpFilter(id) {
+  state.activeFilterExpId = (state.activeFilterExpId === id) ? null : id;
+  state.dataPage = 1;
+  state.dataSelected.clear();
+  renderArchive();
+  renderDataTable();
+  updateFilterBar();
+}
+
+// 取消过滤
+function clearExpFilter() {
+  state.activeFilterExpId = null;
+  state.dataPage = 1;
+  state.dataSelected.clear();
+  renderArchive();
+  renderDataTable();
+  updateFilterBar();
+}
+
+// 更新筛选状态栏
+function updateFilterBar() {
+  const exp = state.activeFilterExpId
+    ? state.savedExperiments.find(e => e.id === state.activeFilterExpId)
+    : null;
+  const label = document.getElementById('data-filter-label');
+  const clearBtn = document.getElementById('data-filter-clear-btn');
+  const bar = document.getElementById('data-filter-bar');
+  if (!label) return;
+  if (exp) {
+    label.textContent = exp.name;
+    label.style.color = 'var(--accent)';
+    if (clearBtn) clearBtn.style.display = 'inline-block';
+    if (bar) bar.style.borderColor = 'var(--accent)';
+  } else {
+    label.textContent = '全部实验';
+    label.style.color = 'var(--text-muted)';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (bar) bar.style.borderColor = 'var(--border)';
+  }
+}
+
+function loadExperiment(id) {
+  const exp = state.savedExperiments.find(e => e.id === id);
+  if (!exp) return;
+  state.currentExp = JSON.parse(JSON.stringify(exp));
+  // Ensure flowSteps exists (backwards compat with old saves that only had mediaOrder/scaleOrder)
+  if (!state.currentExp.flowSteps) {
+    state.currentExp.flowSteps = [
+      ...(exp.mediaOrder||[]).map(n => ({ type:'media', name:n, instanceId:'media_'+n })),
+      ...(exp.scaleOrder||[]).map(n => ({ type:'scale', name:n, instanceId:'scale_'+n+'_0' })),
+    ];
+  }
+  state.selectedMedia = new Set((exp.mediaOrder||[]).filter(n => state.mediaFiles.some(f => f.name === n)));
+  state.selectedScales = new Set((exp.scaleOrder||[]).filter(n => state.scaleFiles.some(s => s.name === n)));
+  Object.assign(state.scaleScoring, exp.scaleScoring || {});
+  document.getElementById('exp-name').value = exp.name;
+  document.getElementById('exp-desc').value = exp.desc || '';
+  document.getElementById('exp-randomize').checked = exp.randomize || false;
+  document.getElementById('mid-placeholder').style.display = 'none';
+  document.getElementById('experiment-editor').style.display = 'flex';
+  renderMediaList();
+  renderScaleList();
+  renderEditorBlocks();
+
+  // 提示用户如果文件夹未加载
+  const missingMedia = (exp.mediaOrder||[]).filter(n => !state.mediaFiles.some(f => f.name === n));
+  const missingScales = (exp.scaleOrder||[]).filter(n => !state.scaleFiles.some(s => s.name === n));
+  if (missingMedia.length || missingScales.length) {
+    const tips = [];
+    if (missingMedia.length) tips.push(`素材文件夹（含 ${missingMedia.length} 个素材）`);
+    if (missingScales.length) tips.push(`量表文件夹（含 ${missingScales.length} 个量表）`);
+    toast(`实验模板已加载。请在左侧重新选择：${tips.join('、')}`, 'warn');
+  } else {
+    toast('实验模板已加载 ✓', 'success');
+  }
+}
+
+function deleteExperiment(id) {
+  showConfirm('删除实验模板', '确认删除该实验模板？此操作不可撤销。', () => {
+    state.savedExperiments = state.savedExperiments.filter(e => e.id !== id);
+    persistExperiments();
+    renderArchive();
+    toast('已删除', 'success');
+  });
+}
+
+// ============================================================
+// EXPERIMENT EXECUTION
+// ============================================================
+function startExperiment(id) {
+  const exp = state.savedExperiments.find(e => e.id === id);
+  if (!exp) return;
+
+  // Ensure flowSteps exists (backwards compat)
+  const flowSteps = exp.flowSteps || [
+    ...(exp.mediaOrder||[]).map(n => ({ type:'media', name:n, instanceId:'media_'+n })),
+    ...(exp.scaleOrder||[]).map(n => ({ type:'scale', name:n, instanceId:'scale_'+n+'_0' })),
+  ];
+
+  // Validate all media files are loaded
+  const missingMedia = flowSteps.filter(s=>s.type==='media' && !state.mediaFiles.some(f=>f.name===s.name));
+  if (missingMedia.length) {
+    toast(`以下素材未找到: ${missingMedia.map(s=>s.name).join(', ')}，请先选择正确的素材文件夹`, 'error');
+    return;
+  }
+
+  // Apply randomize to media steps
+  let steps = [...flowSteps];
+  if (exp.randomize) {
+    const mediaSteps = shuffle(steps.filter(s=>s.type==='media'));
+    let mi = 0;
+    steps = steps.map(s => s.type==='media' ? mediaSteps[mi++] : s);
+  }
+
+  state.execContext = {
+    exp: JSON.parse(JSON.stringify(exp)),
+    flowSteps: steps,
+    stepIdx: 0,         // current position in flowSteps
+    // answers keyed by instanceId for scales, by name for media timing
+    answers: {},        // { instanceId: { qi: score } }
+    mediaTimestamps: {},
+    startTime: null,
+  };
+  openModal('subject-modal');
+}
+
+function submitSubjectInfo() {
+  const subjectId = document.getElementById('subject-id').value.trim();
+  if (!subjectId) { toast('请填写被试编号', 'warn'); return; }
+  state.currentSubject = {
+    subjectId,
+    age: document.getElementById('subject-age').value || '',
+    gender: document.getElementById('subject-gender').value || '',
+  };
+  closeModal('subject-modal');
+  document.getElementById('subject-id').value = '';
+  document.getElementById('subject-age').value = '';
+  document.getElementById('subject-gender').value = '';
+  // 延迟一帧确保 modal 完全关闭后再激活实验全屏
+  setTimeout(() => beginExecution(), 50);
+}
+
+function beginExecution() {
+  const screen = document.getElementById('exec-screen');
+  screen.classList.add('active');
+  document.getElementById('exec-exp-title').textContent = state.execContext.exp.name;
+  state.execContext.startTime = new Date();
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+  document.addEventListener('contextmenu', preventContextMenu);
+
+  const ctx = state.execContext;
+  const mediaCount = ctx.flowSteps.filter(s => s.type === 'media').length;
+  const scaleCount  = ctx.flowSteps.filter(s => s.type === 'scale').length;
+
+  // 确保 DOM 完全渲染后再写入内容
+  requestAnimationFrame(() => {
+    const body = document.getElementById('exec-body');
+    const footer = document.getElementById('exec-footer');
+    if (!body || !footer) {
+      toast('界面初始化失败，请刷新后重试', 'error');
+      return;
+    }
+    body.innerHTML = `
+      <div class="instruction-box">
+        <div class="instruction-icon">📋</div>
+        <p class="instruction-text">本次实验共包含 <strong>${mediaCount}</strong> 个素材和 <strong>${scaleCount}</strong> 个量表，请按提示依次完成。<br><br>答案请根据自身真实感受选择。</p>
+      </div>`;
+    footer.innerHTML =
+      '<button class="btn btn-primary" style="min-width:160px;padding:12px 28px;font-size:15px;" onclick="advanceToStep(0)">开始实验 →</button>';
+    updateProgress('指导语');
+  });
+}
+
+function beforeUnloadHandler(e) {
+  e.preventDefault();
+  e.returnValue = '实验正在进行中，确认离开将丢失当前进度。';
+}
+
+function preventContextMenu(e) {
+  e.preventDefault();
+}
+
+function showInstruction() {
+  // 保留此函数以防其他地方调用，直接转发到 beginExecution 的逻辑
+  const ctx = state.execContext;
+  const mediaCount = ctx.flowSteps.filter(s=>s.type==='media').length;
+  const scaleCount = ctx.flowSteps.filter(s=>s.type==='scale').length;
+  document.getElementById('exec-body').innerHTML = `
+    <div class="instruction-box">
+      <div class="instruction-icon">📋</div>
+      <p class="instruction-text">本次实验共包含 ${mediaCount} 个素材和 ${scaleCount} 个量表，请按提示依次完成。<br>答案请根据自身真实感受选择。</p>
+    </div>`;
+  document.getElementById('exec-footer').innerHTML =
+    `<button class="btn btn-primary" style="min-width:160px;" onclick="advanceToStep(0)">开始实验 →</button>`;
+  updateProgress('指导语');
+}
+
+// Main step dispatcher — called to show step at index
+function advanceToStep(idx) {
+  const ctx = state.execContext;
+  ctx.stepIdx = idx;
+  if (idx >= ctx.flowSteps.length) {
+    submitExperiment();
+    return;
+  }
+  const step = ctx.flowSteps[idx];
+  if (step.type === 'media') showMediaStep(step, idx);
+  else showScaleStep(step, idx);
+}
+
+function showMediaStep(step, idx) {
+  const ctx = state.execContext;
+  const mFile = state.mediaFiles.find(f => f.name === step.name);
+  const totalSteps = ctx.flowSteps.length;
+  const mediaSteps = ctx.flowSteps.filter(s=>s.type==='media');
+  const mediaPos = mediaSteps.findIndex(s=>s.instanceId===step.instanceId) + 1;
+
+  if (mFile && mFile.url) {
+    ctx.mediaTimestamps[step.name] = { start: Date.now() };
+  }
+  updateProgress(`素材 ${mediaPos}/${mediaSteps.length}（步骤 ${idx+1}/${totalSteps}）`);
+
+  let mediaHtml = '';
+  if (!mFile || !mFile.url) {
+    mediaHtml = `
+      <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+        <p style="font-size:15px;color:var(--danger);font-weight:600;margin-bottom:8px;">素材文件未找到</p>
+        <p style="font-size:13px;color:var(--text-muted);">「${escHtml(step.name)}」</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">请返回主界面，在左侧重新选择素材文件夹后再开始实验</p>
+      </div>`;
+  } else if (mFile.type === 'image') {
+    mediaHtml = `<img src="${mFile.url}" onclick="zoomImage('${mFile.url}')" title="点击放大" style="max-width:100%;max-height:55vh;border-radius:var(--radius);box-shadow:var(--shadow-md);cursor:zoom-in;display:block;">`;
+  } else {
+    mediaHtml = `<video src="${mFile.url}" controls autoplay style="max-width:100%;max-height:55vh;border-radius:var(--radius);box-shadow:var(--shadow-md);display:block;"></video>`;
+  }
+
+  document.getElementById('exec-body').innerHTML = `
+    <div style="width:100%;max-width:720px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+      ${mediaHtml}
+      <div class="media-counter" style="font-size:13px;color:var(--text-muted);">${escHtml(step.name)}</div>
+    </div>`;
+
+  const isLast = idx === ctx.flowSteps.length - 1;
+  const nextStep = ctx.flowSteps[idx+1];
+  const nextLabel = isLast ? '提交测试 ✓'
+    : nextStep && nextStep.type==='scale' ? '查看完毕，填写量表 →'
+    : '下一个素材 →';
+
+  document.getElementById('exec-footer').innerHTML = `
+    ${idx > 0 ? `<button class="btn btn-ghost" onclick="goBackStep(${idx})">← 上一步</button>` : ''}
+    <button class="btn btn-primary" style="min-width:160px;" onclick="finishMediaStep('${escHtml(step.name)}', ${idx})">${nextLabel}</button>`;
+}
+
+function finishMediaStep(mediaName, idx) {
+  const ctx = state.execContext;
+  if (ctx.mediaTimestamps[mediaName]) {
+    ctx.mediaTimestamps[mediaName].duration = Date.now() - ctx.mediaTimestamps[mediaName].start;
+  }
+  advanceToStep(idx + 1);
+}
+
+function goBackStep(idx) {
+  advanceToStep(idx - 1);
+}
+
+function showScaleStep(step, idx) {
+  const ctx = state.execContext;
+  const exp = ctx.exp;
+  const sName = step.name;
+  const instanceId = step.instanceId;
+  const questions = (exp.scaleQuestions[sName] || []).filter(q => !q.removed);
+  const scoring = (exp.scaleScoring || {})[sName] || '5点';
+  const points = scoring === '7点' ? 7 : 5;
+
+  if (!ctx.answers[instanceId]) ctx.answers[instanceId] = {};
+
+  const scaleSteps = ctx.flowSteps.filter(s=>s.type==='scale');
+  const scalePos = scaleSteps.findIndex(s=>s.instanceId===instanceId) + 1;
+  const totalInstances = scaleSteps.filter(s=>s.name===sName).length;
+  const repeatHint = totalInstances > 1 ? `（第${scaleSteps.filter((s,i)=>s.name===sName&&i<scalePos-1).length+1}次）` : '';
+
+  updateProgress(`量表 ${scalePos}/${scaleSteps.length}（步骤 ${idx+1}/${ctx.flowSteps.length}）`);
+
+  if (!questions.length) {
+    document.getElementById('exec-body').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+        <p style="font-size:15px;color:var(--danger);font-weight:600;margin-bottom:8px;">量表题目未找到</p>
+        <p style="font-size:13px;color:var(--text-muted);">「${escHtml(sName)}」没有可显示的题目</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:12px;">请返回主界面，重新选择量表文件夹并在预览页确认题目解析正确</p>
+      </div>`;
+    document.getElementById('exec-footer').innerHTML = `
+      ${idx > 0 ? `<button class="btn btn-ghost" onclick="goBackStep(${idx})">← 上一步</button>` : ''}
+      <button class="btn btn-primary" onclick="advanceToStep(${idx+1})">跳过此量表 →</button>`;
+    return;
+  }
+
+  let html = `<div style="width:100%;max-width:600px;">
+    <h2 style="font-size:16px;font-weight:700;margin-bottom:6px;">${escHtml(sName)}${repeatHint}</h2>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:24px;">${points}点李克特量表（1=完全不同意，${points}=完全同意）</p>`;
+
+  questions.forEach((q, qi) => {
+    const answered = ctx.answers[instanceId][qi] !== undefined;
+    html += `<div class="question-block${answered?' answered':''}" id="qblock-${qi}">
+      <div class="question-text${answered?' answered':''}">${qi+1}. ${escHtml(q.text)}</div>
+      <div class="likert-scale">`;
+    for (let v=1; v<=points; v++) {
+      const sel = ctx.answers[instanceId][qi] === v;
+      html += `<button class="likert-btn${sel?' selected':''}${answered&&!sel?' answered':''}"
+        onclick="selectAnswer('${escHtml(instanceId)}','${escHtml(sName)}',${qi},${v},${points},${idx})">${v}</button>`;
+    }
+    html += `</div><div class="scale-labels"><span>完全不同意</span><span>完全同意</span></div></div>`;
+  });
+  html += `</div>`;
+  document.getElementById('exec-body').innerHTML = html;
+
+  const isLast = idx === ctx.flowSteps.length - 1;
+  document.getElementById('exec-footer').innerHTML = `
+    ${idx > 0 ? `<button class="btn btn-ghost" onclick="goBackStep(${idx})">← 上一步</button>` : ''}
+    ${!isLast
+      ? `<button class="btn btn-primary" onclick="nextScaleStep('${escHtml(instanceId)}','${escHtml(sName)}',${idx})">下一步 →</button>`
+      : `<button class="btn btn-primary" onclick="nextScaleStep('${escHtml(instanceId)}','${escHtml(sName)}',${idx})">提交测试 ✓</button>`}`;
+}
+
+function selectAnswer(instanceId, sName, qi, value, points, stepIdx) {
+  const ctx = state.execContext;
+  if (!ctx.answers[instanceId]) ctx.answers[instanceId] = {};
+  ctx.answers[instanceId][qi] = value;
+  // Re-render current scale
+  showScaleStep(ctx.flowSteps[stepIdx], stepIdx);
+  // Auto-scroll to next unanswered
+  const exp = ctx.exp;
+  const questions = (exp.scaleQuestions[sName]||[]).filter(q=>!q.removed);
+  const nextUnanswered = questions.findIndex((_,i)=>ctx.answers[instanceId][i]===undefined);
+  if (nextUnanswered >= 0) {
+    setTimeout(() => {
+      const el = document.getElementById(`qblock-${nextUnanswered}`);
+      if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+    }, 100);
+  }
+}
+
+function nextScaleStep(instanceId, sName, idx) {
+  const ctx = state.execContext;
+  const exp = ctx.exp;
+  const questions = (exp.scaleQuestions[sName]||[]).filter(q=>!q.removed);
+  const unanswered = questions.filter((_,qi)=>ctx.answers[instanceId][qi]===undefined);
+  if (unanswered.length) {
+    toast('请完成所有量表题目后再继续', 'warn');
+    return;
+  }
+  advanceToStep(idx + 1);
+}
+
+async function submitExperiment() {
+  const ctx = state.execContext;
+  // Validate all scale steps answered
+  let allDone = true;
+  ctx.flowSteps.filter(s=>s.type==='scale').forEach(step => {
+    const questions = (ctx.exp.scaleQuestions[step.name]||[]).filter(q=>!q.removed);
+    questions.forEach((_,qi) => {
+      if (!ctx.answers[step.instanceId] || ctx.answers[step.instanceId][qi] === undefined) allDone = false;
+    });
+  });
+  if (!allDone) { toast('请完成所有量表题目后再提交', 'warn'); return; }
+
+  const now = new Date();
+  const testId = '测试-' + formatDateTimeCompact(now);
+
+  // Build rawAnswers keyed by instanceId (for reliable CSV export)
+  const rawAnswers = {};
+  const rawQuestions = JSON.parse(JSON.stringify(ctx.exp.scaleQuestions));
+  ctx.flowSteps.filter(s=>s.type==='scale').forEach(step => {
+    rawAnswers[step.instanceId] = ctx.answers[step.instanceId] || {};
+  });
+
+  // Build flowSteps summary for record
+  const flowSummary = ctx.flowSteps.map(s => `${s.type}:${s.name}`).join(' → ');
+
+  const mediaDurations = ctx.flowSteps.filter(s=>s.type==='media').map(s => {
+    const t = ctx.mediaTimestamps[s.name];
+    return `${s.name}:${t&&t.duration ? Math.round(t.duration/1000)+'s' : '?'}`;
+  }).join(',');
+
+  const record = {
+    testId,
+    subjectId: state.currentSubject.subjectId,
+    age: state.currentSubject.age,
+    gender: state.currentSubject.gender,
+    experimentName: ctx.exp.name,
+    testTime: formatDateTime(now),
+    usedMedia: ctx.flowSteps.filter(s=>s.type==='media').map(s=>s.name).join(','),
+    usedScales: [...new Set(ctx.flowSteps.filter(s=>s.type==='scale').map(s=>s.name))].join(','),
+    flowSummary,
+    mediaDurations,
+    rawAnswers,
+    rawQuestions,
+    flowSteps: ctx.flowSteps,
+  };
+
+  try {
+    await saveTestRecord(record);
+    state.testData.unshift(record);
+    renderArchive();
+    renderDataTable();
+    updateFilterBar();
+    toast('测试数据已保存 ✓', 'success');
+  } catch { toast('数据保存失败', 'error'); }
+
+  endExecution();
+  showDoneScreen();
+}
+
+function showDoneScreen() {
+  const body = document.getElementById('exec-body');
+  body.innerHTML = `
+    <div class="instruction-box" style="text-align:center;">
+      <div class="instruction-icon">🎉</div>
+      <h2 style="margin-bottom:12px;">测试完成！</h2>
+      <p class="instruction-text">感谢您的参与。数据已安全保存至本地。</p>
+    </div>
+  `;
+  document.getElementById('exec-footer').innerHTML = `
+    <button class="btn btn-primary" onclick="exitExecution()">返回主界面</button>
+  `;
+  updateProgress('已完成');
+}
+
+function endExecution() {
+  window.removeEventListener('beforeunload', beforeUnloadHandler);
+  document.removeEventListener('contextmenu', preventContextMenu);
+}
+
+function exitExecution() {
+  endExecution();
+  document.getElementById('exec-screen').classList.remove('active');
+  state.execContext = null;
+  state.currentSubject = null;
+}
+
+function videoEnded() {
+  // Video finished, do nothing special (user can replay or proceed)
+}
+
+function zoomImage(url) {
+  document.getElementById('media-preview-title').textContent = '图片放大';
+  document.getElementById('media-preview-body').innerHTML = `<img src="${url}" class="preview-img">`;
+  openModal('media-preview-modal');
+}
+
+function updateProgress(text) {
+  document.getElementById('exec-progress-label').textContent = text;
+}
+
+// ============================================================
+// DATA TABLE
+// ============================================================
+const DATA_PAGE_SIZE = 10;
+
+function renderDataTable() {
+  const search = document.getElementById('data-search').value.trim().toLowerCase();
+
+  // 过滤：先按实验过滤，再按搜索词过滤
+  let filtered = state.testData;
+  if (state.activeFilterExpId) {
+    const exp = state.savedExperiments.find(e => e.id === state.activeFilterExpId);
+    if (exp) filtered = filtered.filter(r => r.experimentName === exp.name);
+  }
+  if (search) {
+    filtered = filtered.filter(r =>
+      (r.subjectId||'').toLowerCase().includes(search) ||
+      (r.testTime||'').toLowerCase().includes(search)
+    );
+  }
+
+  // Sort
+  const { key, dir } = state.dataSort;
+  filtered.sort((a, b) => {
+    const va = (a[key]||'').toString();
+    const vb = (b[key]||'').toString();
+    return va.localeCompare(vb) * dir;
+  });
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / DATA_PAGE_SIZE));
+  if (state.dataPage > totalPages) state.dataPage = totalPages;
+
+  const start = (state.dataPage - 1) * DATA_PAGE_SIZE;
+  const page = filtered.slice(start, start + DATA_PAGE_SIZE);
+
+  const tbody = document.getElementById('data-tbody');
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">暂无数据</td></tr>`;
+  } else {
+    tbody.innerHTML = page.map(r => `
+      <tr>
+        <td><input type="checkbox" ${state.dataSelected.has(r.testId)?'checked':''} onchange="toggleDataSelect('${escHtml(r.testId)}',this.checked)"></td>
+        <td title="${escHtml(r.subjectId||'')}">${escHtml(r.subjectId||'—')}</td>
+        <td>${escHtml(r.gender||'')}${r.age ? ' ' + escHtml(r.age) + '岁' : ''}</td>
+        <td style="font-size:11px;">${escHtml((r.testTime||'').replace(/\//g,'-'))}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Pagination
+  const pgWrap = document.getElementById('data-pagination');
+  let pgHtml = `<span class="page-info">共 ${total} 条</span>`;
+  for (let p = 1; p <= totalPages; p++) {
+    pgHtml += `<button class="page-btn${p===state.dataPage?' active':''}" onclick="gotoPage(${p})">${p}</button>`;
+  }
+  pgWrap.innerHTML = pgHtml;
+}
+
+function gotoPage(p) { state.dataPage = p; renderDataTable(); }
+function sortData(key) {
+  if (state.dataSort.key === key) state.dataSort.dir *= -1;
+  else { state.dataSort.key = key; state.dataSort.dir = 1; }
+  renderDataTable();
+}
+function toggleDataSelect(id, checked) {
+  if (checked) state.dataSelected.add(id);
+  else state.dataSelected.delete(id);
+}
+function toggleDataSelectAll(checked) {
+  state.testData.forEach(r => checked ? state.dataSelected.add(r.testId) : state.dataSelected.delete(r.testId));
+  renderDataTable();
+}
+
+function batchDeleteData() {
+  if (!state.dataSelected.size) { toast('请先勾选要删除的数据', 'warn'); return; }
+  showConfirm('批量删除数据', `确认删除选中的 ${state.dataSelected.size} 条数据？此操作不可撤销。`, async () => {
+    for (const id of state.dataSelected) {
+      await deleteTestRecord(id);
+    }
+    state.testData = state.testData.filter(r => !state.dataSelected.has(r.testId));
+    state.dataSelected.clear();
+    renderArchive();
+    renderDataTable();
+    updateFilterBar();
+    toast('已删除', 'success');
+  });
+}
+
+// ============================================================
+// CSV EXPORT — 问卷星风格：每题一列，列头=题目文字，值=分数
+// ============================================================
+function exportCSV() {
+  // 1. 根据当前筛选状态决定导出范围
+  let exportData = [...state.testData];
+  let exportExpName = '全部';
+
+  if (state.activeFilterExpId) {
+    const exp = state.savedExperiments.find(e => e.id === state.activeFilterExpId);
+    if (exp) {
+      exportData = exportData.filter(r => r.experimentName === exp.name);
+      exportExpName = exp.name;
+    }
+  }
+  if (!exportData.length) { toast('当前筛选范围内暂无数据，无法导出', 'warn'); return; }
+
+  // 2. 构建列定义 — 以 instanceId + visIdx 为唯一key
+  const colDefs = [];
+  const colKeySet = new Set();
+
+  exportData.forEach(r => {
+    if (!r.rawQuestions) return;
+    const steps = r.flowSteps || Object.keys(r.rawQuestions).map(n=>({ type:'scale', name:n, instanceId:'scale_'+n+'_0' }));
+    steps.filter(s=>s.type==='scale').forEach(step => {
+      const allQs = r.rawQuestions[step.name] || [];
+      const visQs = allQs.filter(q => !q.removed);
+      // Count which occurrence of this scale
+      const priorSameScale = steps.filter((s,i)=>s.type==='scale'&&s.name===step.name&&steps.indexOf(step)>i).length;
+      const suffix = priorSameScale > 0 ? `（第${priorSameScale+1}次）` : '';
+      visQs.forEach((q, visIdx) => {
+        const key = `${step.instanceId}||${visIdx}`;
+        if (!colKeySet.has(key)) {
+          colKeySet.add(key);
+          colDefs.push({ key, instanceId: step.instanceId, scaleName: step.name, visIdx, header: `${step.name}${suffix}_Q${visIdx+1}_${q.text}` });
+        }
+      });
+    });
+  });
+
+  // 3. 列头
+  const fixedHeaders = ['测试编号', '被试编号', '性别', '年龄', '实验名称', '测试时间', '已用素材（呈现顺序）', '实验流程'];
+  const allHeaders = [...fixedHeaders, ...colDefs.map(c => c.header)];
+
+  // 4. 逐行填充
+  const rows = exportData.map(r => {
+    const fixed = [
+      r.testId, r.subjectId||'', r.gender||'', r.age||'',
+      r.experimentName||'', r.testTime||'', r.usedMedia||'', r.flowSummary||'',
+    ];
+    const qCells = colDefs.map(({ instanceId, visIdx, scaleName }) => {
+      // Try instanceId-keyed first (new format), fallback to scaleName-keyed (old format)
+      const answerMap = (r.rawAnswers && r.rawAnswers[instanceId])
+        ? r.rawAnswers[instanceId]
+        : (r.rawAnswers && r.rawAnswers[scaleName] ? r.rawAnswers[scaleName] : {});
+      // Map visIdx back to original qi
+      const originalQs = r.rawQuestions ? (r.rawQuestions[scaleName] || []) : [];
+      let visCount = -1, originalQi = -1;
+      for (let i=0; i<originalQs.length; i++) {
+        if (!originalQs[i].removed) {
+          visCount++;
+          if (visCount === visIdx) { originalQi = i; break; }
+        }
+      }
+      if (originalQi < 0) return '';
+      const score = answerMap[originalQi];
+      return (score !== undefined && score !== null) ? score : '';
+    });
+    return [...fixed, ...qCells];
+  });
+
+  // 5. 生成 CSV（UTF-8 BOM 兼容 Excel/WPS）
+  const csv = [allHeaders, ...rows].map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+  ).join('\r\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `用户体验测试数据-${exportExpName}-${formatDateCompact(new Date())}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`已导出 ${exportData.length} 条记录，${colDefs.length} 道题`, 'success');
+}
+
+// ============================================================
+// MODAL HELPERS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  // Stop any playing video
+  const videos = document.querySelectorAll(`#${id} video`);
+  videos.forEach(v => { v.pause(); v.currentTime = 0; });
+}
+
+// ============================================================
+// CONFIRM DIALOG
+// ============================================================
+function showConfirm(title, message, onConfirm) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  const okBtn = document.getElementById('confirm-ok-btn');
+  okBtn.onclick = () => { closeModal('confirm-modal'); onConfirm(); };
+  openModal('confirm-modal');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(message, type = '') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast${type ? ' ' + type : ''}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.3s';
+    setTimeout(() => el.remove(), 300);
+  }, 2800);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function formatDateTime(d) {
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function formatDateTimeCompact(d) {
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function formatDateCompact(d) {
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Keyboard: ESC closes modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['media-preview-modal','scale-preview-modal','preview-modal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.style.display !== 'none') closeModal(id);
+    });
+  }
+});
+</script>
+</body>
+</html>
