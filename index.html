@@ -1134,16 +1134,7 @@ const state = {
 // ============================================================
 // INIT
 // ============================================================
-(function init() {
-  // Check browser support
-  if (!window.indexedDB || !window.File || !window.FileReader) {
-    document.getElementById('unsupported-banner').style.display = 'flex';
-    return;
-  }
-  initDB();
-  loadSavedExperiments();
-  renderArchive();
-})();
+
 
 // ============================================================
 // INDEXED DB
@@ -2661,6 +2652,16 @@ document.addEventListener('keydown', e => {
     });
   }
 });
+  (function init() {
+  // Check browser support
+  if (!window.indexedDB || !window.File || !window.FileReader) {
+    document.getElementById('unsupported-banner').style.display = 'flex';
+    return;
+  }
+  initDB();
+  loadSavedExperiments();
+  renderArchive();
+})();
 </script>
 </body>
 </html>
