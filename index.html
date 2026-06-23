@@ -941,9 +941,14 @@
   <div class="col" id="col-right">
 
     <!-- Create Button -->
-    <div class="create-btn-wrap">
-      <button class="btn btn-primary btn-full" onclick="createNewExperiment()">➕ 创建新实验</button>
-    </div>
+   <div class="create-btn-wrap">
+  <button class="btn btn-primary btn-full" onclick="seedPresetCase('warning01'); renderMediaList(); renderScaleList(); renderArchive(); toast('预置案例已加载，可直接开始测试 ✓', 'success');">
+    🚀 加载预置案例
+  </button>
+  <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="createNewExperiment()">
+    ➕ 创建新实验
+  </button>
+</div>
 
     <!-- Experiment Archive -->
     <div class="section-label">实验模板</div>
