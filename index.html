@@ -2657,6 +2657,176 @@ document.addEventListener('keydown', e => {
     });
   }
 });
+  // ============================================================
+// PRESET CASES: 内置预置实验案例
+// ============================================================
+
+const PRESET_CASES = {
+  warning01: {
+    id: 'preset-warning01',
+    name: '预警素材-方案01',
+    desc: '内置预置案例：用于真实用户走查，无需本地上传素材和量表。',
+    randomize: false,
+
+    media: [
+      {
+        name: '警告界面_SET01.png',
+        url: './assets/warning01/warn_set01.png',
+        type: 'image'
+      },
+      {
+        name: '警告界面_SET02.png',
+        url: './assets/warning01/warn_set02.png',
+        type: 'image'
+      },
+      {
+        name: '警告界面_SET03.png',
+        url: './assets/warning01/warn_set03.png',
+        type: 'image'
+      },
+      {
+        name: '警告界面_SET04.png',
+        url: './assets/warning01/warn_set04.png',
+        type: 'image'
+      }
+    ],
+
+    scales: [
+      {
+        name: '风险感知量表',
+        scoring: '7点',
+        questions: [
+          '我认为当前情境存在较高风险。',
+          '该预警信息让我意识到潜在危险。',
+          '我认为如果不采取行动，可能会产生不良后果。',
+          '我认为该情境需要及时关注和处理。'
+        ]
+      },
+      {
+        name: '情境意识量表',
+        scoring: '7点',
+        questions: [
+          '我能够清楚理解当前界面传达的信息。',
+          '我能够判断当前情境中需要关注的重点。',
+          '我能够预测接下来可能发生的情况。',
+          '我能够根据界面信息做出相应判断。'
+        ]
+      }
+    ],
+
+    flow: [
+      { type: 'media', name: '警告界面_SET01.png' },
+      { type: 'scale', name: '风险感知量表' },
+      { type: 'scale', name: '情境意识量表' },
+
+      { type: 'media', name: '警告界面_SET02.png' },
+      { type: 'scale', name: '风险感知量表' },
+      { type: 'scale', name: '情境意识量表' },
+
+      { type: 'media', name: '警告界面_SET03.png' },
+      { type: 'scale', name: '风险感知量表' },
+      { type: 'scale', name: '情境意识量表' },
+
+      { type: 'media', name: '警告界面_SET04.png' },
+      { type: 'scale', name: '风险感知量表' },
+      { type: 'scale', name: '情境意识量表' }
+    ]
+  }
+};
+
+function seedPresetCase(caseId) {
+  const c = PRESET_CASES[caseId];
+  if (!c) {
+    toast('未找到预置案例', 'error');
+    return;
+  }
+
+  // 1. 注入线上素材
+  c.media.forEach(m => {
+    if (!state.mediaFiles.some(f => f.name === m.name)) {
+      state.mediaFiles.push({
+        name: m.name,
+        size: '内置',
+        type: m.type || 'image',
+        file: null,
+        url: m.url
+      });
+    }
+  });
+
+  // 2. 注入内置量表
+  c.scales.forEach(s => {
+    if (!state.scaleFiles.some(sf => sf.name === s.name)) {
+      state.scaleFiles.push({
+        name: s.name,
+        rawText: s.questions.join('\n'),
+        questions: s.questions
+      });
+    }
+    state.scaleScoring[s.name] = s.scoring || '7点';
+  });
+
+  // 3. 生成实验流程
+  const flowSteps = c.flow.map((step, idx) => ({
+    type: step.type,
+    name: step.name,
+    instanceId: `${step.type}_${step.name}_${idx}`
+  }));
+
+  const mediaOrder = c.flow
+    .filter(s => s.type === 'media')
+    .map(s => s.name);
+
+  const scaleOrder = [
+    ...new Set(c.flow.filter(s => s.type === 'scale').map(s => s.name))
+  ];
+
+  const scaleQuestions = {};
+  c.scales.forEach(s => {
+    scaleQuestions[s.name] = s.questions.map(q => ({
+      text: q,
+      removed: false
+    }));
+  });
+
+  const expData = {
+    id: c.id,
+    name: c.name,
+    desc: c.desc || '',
+    flowSteps,
+    mediaOrder,
+    scaleOrder,
+    randomize: c.randomize || false,
+    scaleScoring: { ...state.scaleScoring },
+    scaleQuestions,
+    savedAt: '预置案例'
+  };
+
+  // 4. 写入右侧实验模板，不重复添加
+  const existingIdx = state.savedExperiments.findIndex(e => e.id === expData.id);
+  if (existingIdx >= 0) {
+    state.savedExperiments[existingIdx] = expData;
+  } else {
+    state.savedExperiments.unshift(expData);
+  }
+
+  persistExperiments();
+
+  const mediaControls = document.getElementById('media-controls');
+  if (mediaControls) mediaControls.style.display = 'flex';
+
+  const mediaFolderPath = document.getElementById('media-folder-path');
+  if (mediaFolderPath) {
+    mediaFolderPath.textContent = '🌐 已加载预置素材';
+    mediaFolderPath.style.display = 'block';
+  }
+
+  const scaleFolderPath = document.getElementById('scale-folder-path');
+  if (scaleFolderPath) {
+    scaleFolderPath.textContent = '🌐 已加载预置量表';
+    scaleFolderPath.style.display = 'block';
+  }
+}
   (function init() {
   // Check browser support
   if (!window.indexedDB || !window.File || !window.FileReader) {
