@@ -2660,80 +2660,78 @@ document.addEventListener('keydown', e => {
   // ============================================================
 // PRESET CASES: 内置预置实验案例
 // ============================================================
+const exp01Media = Array.from({ length: 22 }, (_, i) => {
+  const num = String(i + 1).padStart(2, '0');
+  return {
+    name: `warn_${num}.png`,
+    url: `./assets/exp01/warn_${num}.png`,
+    type: 'image'
+  };
+});
+
+const exp01Scales = [
+  {
+    name: '风险感知量表',
+    scoring: '7点',
+    questions: [
+      '我认为当前情境存在较高风险。',
+      '该预警信息让我意识到潜在危险。',
+      '我认为如果不采取行动，可能会产生不良后果。',
+      '我认为该情境需要及时关注和处理。'
+    ]
+  },
+  {
+    name: '情境意识量表',
+    scoring: '7点',
+    questions: [
+      '我能够清楚理解当前界面传达的信息。',
+      '我能够判断当前情境中需要关注的重点。',
+      '我能够预测接下来可能发生的情况。',
+      '我能够根据界面信息做出相应判断。'
+    ]
+  },
+  {
+    name: '心理负荷量表',
+    scoring: '7点',
+    questions: [
+      '我认为完成当前任务需要较高的注意力投入。',
+      '我在理解当前界面信息时感到一定压力。',
+      '我认为当前界面的信息处理负担较重。',
+      '我需要花费较多精力才能做出判断。'
+    ]
+  },
+  {
+    name: '视觉疲劳量表',
+    scoring: '7点',
+    questions: [
+      '观看当前界面后，我感到眼部疲劳。',
+      '当前界面的视觉信息让我感到不适。',
+      '我认为当前界面需要较长时间注视才能理解。',
+      '当前界面的视觉呈现让我感到负担。'
+    ]
+  }
+];
 
 const PRESET_CASES = {
   warning01: {
     id: 'preset-warning01',
     name: '预警素材-方案01',
-    desc: '内置预置案例：用于真实用户走查，无需本地上传素材和量表。',
+    desc: '内置预置案例：22个预警素材，4个量表，用于真实用户走查。',
     randomize: false,
 
-    media: [
-      {
-        name: '警告界面_SET01.png',
-        url: './assets/warning01/warn_set01.png',
-        type: 'image'
-      },
-      {
-        name: '警告界面_SET02.png',
-        url: './assets/warning01/warn_set02.png',
-        type: 'image'
-      },
-      {
-        name: '警告界面_SET03.png',
-        url: './assets/warning01/warn_set03.png',
-        type: 'image'
-      },
-      {
-        name: '警告界面_SET04.png',
-        url: './assets/warning01/warn_set04.png',
-        type: 'image'
-      }
-    ],
+    media: exp01Media,
 
-    scales: [
-      {
-        name: '风险感知量表',
-        scoring: '7点',
-        questions: [
-          '我认为当前情境存在较高风险。',
-          '该预警信息让我意识到潜在危险。',
-          '我认为如果不采取行动，可能会产生不良后果。',
-          '我认为该情境需要及时关注和处理。'
-        ]
-      },
-      {
-        name: '情境意识量表',
-        scoring: '7点',
-        questions: [
-          '我能够清楚理解当前界面传达的信息。',
-          '我能够判断当前情境中需要关注的重点。',
-          '我能够预测接下来可能发生的情况。',
-          '我能够根据界面信息做出相应判断。'
-        ]
-      }
-    ],
+    scales: exp01Scales,
 
-    flow: [
-      { type: 'media', name: '警告界面_SET01.png' },
+    flow: exp01Media.flatMap(m => [
+      { type: 'media', name: m.name },
       { type: 'scale', name: '风险感知量表' },
       { type: 'scale', name: '情境意识量表' },
-
-      { type: 'media', name: '警告界面_SET02.png' },
-      { type: 'scale', name: '风险感知量表' },
-      { type: 'scale', name: '情境意识量表' },
-
-      { type: 'media', name: '警告界面_SET03.png' },
-      { type: 'scale', name: '风险感知量表' },
-      { type: 'scale', name: '情境意识量表' },
-
-      { type: 'media', name: '警告界面_SET04.png' },
-      { type: 'scale', name: '风险感知量表' },
-      { type: 'scale', name: '情境意识量表' }
-    ]
+      { type: 'scale', name: '心理负荷量表' },
+      { type: 'scale', name: '视觉疲劳量表' }
+    ])
   }
 };
-
 function seedPresetCase(caseId) {
   const c = PRESET_CASES[caseId];
   if (!c) {
