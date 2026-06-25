@@ -941,9 +941,9 @@
   <div class="col" id="col-right">
 
     <!-- Create Button -->
-   <div class="create-btn-wrap">
-  <button class="btn btn-primary btn-full" onclick="seedPresetCase('warning01'); renderMediaList(); renderScaleList(); renderArchive(); toast('预置案例已加载，可直接开始测试 ✓', 'success');">
-    🚀 加载预置案例
+<div class="create-btn-wrap">
+  <button class="btn btn-primary btn-full" onclick="loadAllPresetCases()">
+    🚀 加载全部预置实验
   </button>
   <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="createNewExperiment()">
     ➕ 创建新实验
@@ -2711,7 +2711,101 @@ const exp01Scales = [
     ]
   }
 ];
+// ===================== EXP02 预置实验 =====================
+// 注意：这里的 url 要和 GitHub 里的文件名完全一致
+const exp02Media = [
+  { name: 'exp02_img_01.png', url: './assets/exp02/img_01.png', type: 'image' },
+  { name: 'exp02_img_02.jpg', url: './assets/exp02/img_02.jpg', type: 'image' },
+  { name: 'exp02_video_01.mp4', url: './assets/exp02/video_01.mp4', type: 'video' },
+  { name: 'exp02_img_03.png', url: './assets/exp02/img_03.png', type: 'image' },
+  { name: 'exp02_img_04.jpg', url: './assets/exp02/img_04.jpg', type: 'image' },
+  { name: 'exp02_img_05.png', url: './assets/exp02/img_05.png', type: 'image' }
+];
 
+const exp02Scales = [
+  {
+    name: 'exp02｜风险感知量表',
+    scoring: '7点',
+    questions: [
+      '我认为此次灾难事件发生的可能性很高',
+      '我认为此次灾难事件造成的后果非常严重',
+      '此次灾难事件让我感到担忧和焦虑',
+      '此次灾难事件让我产生了强烈的负面情绪'
+    ]
+  },
+  {
+    name: 'exp02｜感知信息性量表',
+    scoring: '7点',
+    questions: [
+      '我清楚该预警信息所代表的风险等级',
+      '我有能力充分理解该预警信息所代表的风险',
+      '我能够熟练地读懂该预警信息',
+      '我能根据该预警信息轻松理解当前情况',
+      '我能根据该预警信息清楚地知道应该怎么做',
+      '该预警信息对我的应急响应工作具有实用价值',
+      '该预警信息对我履行安全职责具有重要意义'
+    ]
+  },
+  {
+    name: 'exp02｜自我效能感量表',
+    scoring: '7点',
+    questions: [
+      '我有信心能够准确判断当前事件的情况',
+      '我相信自己的判断和操作不会增加风险',
+      '我有信心决定在当前情境中应如何行动',
+      '我有信心处理当前情境中可能出现的突发事故'
+    ]
+  }
+];
+
+
+// ===================== EXP03 预置实验 =====================
+const exp03Media = [
+  { name: 'exp03_img_01.png', url: './assets/exp03/img_01.png', type: 'image' },
+  { name: 'exp03_video_01.mp4', url: './assets/exp03/video_01.mp4', type: 'video' }
+];
+
+const exp03Scales = [
+  {
+    name: 'exp03｜风险感知量表',
+    scoring: '7点',
+    questions: [
+      '我认为此次灾难事件发生的可能性很高',
+      '我认为此次灾难事件造成的后果非常严重',
+      '此次灾难事件让我感到担忧和焦虑',
+      '此次灾难事件让我产生了强烈的负面情绪'
+    ]
+  },
+  {
+    name: 'exp03｜社会规范量表',
+    scoring: '7点',
+    questions: [
+      '与我相关的人会对这条预警信息作出反应',
+      '大多数人会对这条预警信息作出反应',
+      '我认为大多数人觉得自己应该采取应对行动',
+      '我认为大多数人期望自己能够采取应对行动',
+      '我认为大多数人认为采取应对行动是正确的'
+    ]
+  },
+  {
+    name: 'exp03｜灾难经历与知识量表',
+    scoring: '7点',
+    questions: [
+      '我的社交网络中有人曾经历过灾难事件',
+      '我个人曾经历过灾难事件',
+      '我具备一定的灾难危害相关知识',
+      '我具备一定的灾难应急响应专业知识'
+    ]
+  },
+  {
+    name: 'exp03｜灾难应对行为意向量表',
+    scoring: '7点',
+    questions: [
+      '面对灾难警报，我愿意主动采取措施以应对可能的后果',
+      '面对灾难警报，我愿意采取行动以避免可能遭受的损失'
+    ]
+  }
+];
 const PRESET_CASES = {
   warning01: {
     id: 'preset-warning01',
@@ -2730,6 +2824,37 @@ const PRESET_CASES = {
       { type: 'scale', name: '心理负荷量表' },
       { type: 'scale', name: '视觉疲劳量表' }
     ])
+  },
+    exp02: {
+    id: 'preset-exp02',
+    name: '实验02：灾难预警信息理解实验',
+    desc: '实验02：6个混合素材，包含风险感知、感知信息性和自我效能感量表。',
+    randomize: false,
+
+    media: exp02Media,
+
+    scales: exp02Scales,
+
+    flow: exp02Media.flatMap(m => [
+      { type: 'media', name: m.name },
+      ...exp02Scales.map(s => ({ type: 'scale', name: s.name }))
+    ])
+  },
+
+  exp03: {
+    id: 'preset-exp03',
+    name: '实验03：灾难预警行为意向实验',
+    desc: '实验03：2个混合素材，包含风险感知、社会规范、灾难经历与知识、灾难应对行为意向量表。',
+    randomize: false,
+
+    media: exp03Media,
+
+    scales: exp03Scales,
+
+    flow: exp03Media.flatMap(m => [
+      { type: 'media', name: m.name },
+      ...exp03Scales.map(s => ({ type: 'scale', name: s.name }))
+    ])
   }
 };
 function seedPresetCase(caseId) {
@@ -2738,7 +2863,16 @@ function seedPresetCase(caseId) {
     toast('未找到预置案例', 'error');
     return;
   }
+function loadAllPresetCases() {
+  Object.keys(PRESET_CASES).forEach(caseId => {
+    seedPresetCase(caseId);
+  });
 
+  renderMediaList();
+  renderScaleList();
+  renderArchive();
+  toast('全部预置实验已加载，可直接开始测试 ✓', 'success');
+}
   // 1. 注入线上素材
   c.media.forEach(m => {
     if (!state.mediaFiles.some(f => f.name === m.name)) {
@@ -2824,6 +2958,16 @@ function seedPresetCase(caseId) {
     scaleFolderPath.textContent = '🌐 已加载预置量表';
     scaleFolderPath.style.display = 'block';
   }
+}
+  function loadAllPresetCases() {
+  Object.keys(PRESET_CASES).forEach(caseId => {
+    seedPresetCase(caseId);
+  });
+
+  renderMediaList();
+  renderScaleList();
+  renderArchive();
+  toast('全部预置实验已加载，可直接开始测试 ✓', 'success');
 }
   (function init() {
   // Check browser support
