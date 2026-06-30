@@ -1538,7 +1538,19 @@ function previewMedia(idx) {
 function previewScale(idx) {
   const s = state.scaleFiles[idx];
   document.getElementById('scale-preview-title').textContent = s.name;
-  document.getElementById('scale-preview-text').textContent = s.rawText;
+  const listHtml = s.questions.length
+    ? s.questions.map((q, i) => `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-soft);">
+        <span style="color:var(--text-muted);font-size:12px;min-width:22px;flex-shrink:0;">${i+1}.</span>
+        <span style="font-size:13px;line-height:1.7;">${escHtml(q)}</span>
+      </div>`).join('')
+    : '<p class="empty-tip">未解析出题目</p>';
+  document.getElementById('scale-preview-text').innerHTML = `
+    <div style="margin-bottom:10px;font-size:11px;color:var(--text-muted);">已自动解析为 ${s.questions.length} 道题目 · 序号仅用于核对，不会写入原始文件</div>
+    ${listHtml}
+    <details style="margin-top:14px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">查看原始文件文本</summary>
+      <div style="white-space:pre-wrap;font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.8;">${escHtml(s.rawText)}</div>
+    </details>`;
   openModal('scale-preview-modal');
 }
 
@@ -1551,7 +1563,7 @@ function createNewExperiment() {
     desc: '',
     flowSteps: [], // [{ type:'media'|'scale', name, instanceId }]
     randomize: false,
-    scaleQuestions: {}, // { scaleName: [{ text, removed }] }
+    scaleQuestions: {}, // { scaleName: [{ text, textEn, removed }] }
   };
   document.getElementById('exp-name').value = '';
   document.getElementById('exp-desc').value = '';
@@ -1732,8 +1744,11 @@ function openPreviewModal() {
     if (!state.currentExp.scaleQuestions[sName]) {
       const sf = state.scaleFiles.find(s => s.name === sName);
       state.currentExp.scaleQuestions[sName] = sf
-        ? sf.questions.map(q => ({ text: q, removed: false }))
+        ? sf.questions.map(q => ({ text: q, textEn: '', removed: false }))
         : [];
+    } else {
+      // 兼容旧实验模板：补上 textEn 字段
+      state.currentExp.scaleQuestions[sName].forEach(q => { if (q.textEn === undefined) q.textEn = ''; });
     }
   });
 
@@ -1748,7 +1763,7 @@ function renderPreviewModal() {
 
   const steps = state.currentExp.flowSteps;
   let html = `<p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.8;">
-    点击题目文字可编辑 · 悬停行显示 🗑 可移除误识别题项 · 移除不影响源文件
+    点击题目文字可编辑 · 悬停行显示 🗑 可移除误识别题项 · 移除不影响源文件 · 点击「🌐 译」翻译单题，或用「整表翻译」一并生成全部英文
   </p>`;
 
   html += `<div class="preview-section"><div class="preview-section-title">实验流程（${steps.length}个节点）</div>`;
@@ -1779,25 +1794,45 @@ function renderPreviewModal() {
           <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#f3e5f5;color:#6a1b9a;">量表</span>
           📋 ${escHtml(step.name)}${repeatHint}
           <span style="font-size:11px;font-weight:400;color:var(--text-muted);">${scoring}李克特</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:11px;padding:3px 8px;"
+                  onclick="translateScaleAll('${escHtml(step.name)}')">🌐 整表翻译</button>
         </div>`;
 
       questions.forEach((q, qi) => {
         if (q.removed) return;
-        html += `<div class="preview-question-row" id="pq-${escHtml(step.name)}-${qi}">
-          <span style="color:var(--text-muted);font-size:12px;min-width:28px;flex-shrink:0;">${qi+1}.</span>
-          <input type="text" class="preview-q-input"
-                 data-scale="${escHtml(step.name)}" data-qi="${qi}"
-                 placeholder="题目文字"
-                 style="flex:1;border:1px solid transparent;border-radius:4px;padding:4px 8px;
-                        font-size:13px;font-family:inherit;outline:none;background:transparent;
-                        cursor:text;transition:border-color 0.15s,background 0.15s;line-height:1.6;"
-                 onmouseover="this.style.borderColor='var(--border)';this.style.background='var(--bg)'"
-                 onmouseout="if(document.activeElement!==this){this.style.borderColor='transparent';this.style.background='transparent'}"
-                 onfocus="this.style.borderColor='var(--accent)';this.style.background='var(--surface)'"
-                 onblur="this.style.borderColor='transparent';this.style.background='transparent';updateQuestionText(this)"
-                 oninput="updateQuestionText(this)">
-          <button class="remove-q-btn" title="移除此项（仅对当前实验生效）"
-                  onclick="removeQuestion('${escHtml(step.name)}',${qi})">🗑 移除</button>
+        html += `<div class="preview-question-row" id="pq-${escHtml(step.name)}-${qi}"
+                       style="flex-direction:column;align-items:stretch;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--text-muted);font-size:12px;min-width:22px;flex-shrink:0;">${qi+1}.</span>
+            <input type="text" class="preview-q-input"
+                   data-scale="${escHtml(step.name)}" data-qi="${qi}" data-lang="zh"
+                   placeholder="题目文字（中文）"
+                   style="flex:1;border:1px solid transparent;border-radius:4px;padding:4px 8px;
+                          font-size:13px;font-family:inherit;outline:none;background:transparent;
+                          cursor:text;transition:border-color 0.15s,background 0.15s;line-height:1.6;"
+                   onmouseover="this.style.borderColor='var(--border)';this.style.background='var(--bg)'"
+                   onmouseout="if(document.activeElement!==this){this.style.borderColor='transparent';this.style.background='transparent'}"
+                   onfocus="this.style.borderColor='var(--accent)';this.style.background='var(--surface)'"
+                   onblur="this.style.borderColor='transparent';this.style.background='transparent';updateQuestionText(this)"
+                   oninput="updateQuestionText(this)">
+            <button class="remove-q-btn" title="移除此项（仅对当前实验生效）"
+                    onclick="removeQuestion('${escHtml(step.name)}',${qi})">🗑 移除</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-left:30px;">
+            <input type="text" class="preview-q-input"
+                   data-scale="${escHtml(step.name)}" data-qi="${qi}" data-lang="en"
+                   placeholder="English (click 🌐 to auto-translate)"
+                   style="flex:1;border:1px solid transparent;border-radius:4px;padding:4px 8px;
+                          font-size:12px;font-style:italic;color:var(--text-secondary);font-family:inherit;outline:none;background:transparent;
+                          cursor:text;transition:border-color 0.15s,background 0.15s;line-height:1.6;"
+                   onmouseover="this.style.borderColor='var(--border)';this.style.background='var(--bg)'"
+                   onmouseout="if(document.activeElement!==this){this.style.borderColor='transparent';this.style.background='transparent'}"
+                   onfocus="this.style.borderColor='var(--accent)';this.style.background='var(--surface)'"
+                   onblur="this.style.borderColor='transparent';this.style.background='transparent';updateQuestionText(this)"
+                   oninput="updateQuestionText(this)">
+            <button class="icon-btn" title="单题AI翻译" style="font-size:12px;flex-shrink:0;"
+                    onclick="translateSingleQuestion('${escHtml(step.name)}',${qi})">🌐</button>
+          </div>
         </div>`;
       });
       html += `</div>`;
@@ -1809,16 +1844,20 @@ function renderPreviewModal() {
   body.querySelectorAll('.preview-q-input').forEach(inp => {
     const sName = inp.dataset.scale;
     const qi = parseInt(inp.dataset.qi);
-    inp.value = (state.currentExp.scaleQuestions[sName][qi] || {}).text || '';
+    const lang = inp.dataset.lang;
+    const q = state.currentExp.scaleQuestions[sName][qi] || {};
+    inp.value = lang === 'en' ? (q.textEn || '') : (q.text || '');
   });
 }
 
 function updateQuestionText(el) {
   const sName = el.dataset.scale;
   const qi = parseInt(el.dataset.qi);
-  if (state.currentExp.scaleQuestions[sName] && state.currentExp.scaleQuestions[sName][qi]) {
-    state.currentExp.scaleQuestions[sName][qi].text = el.value.trim() || el.value;
-  }
+  const lang = el.dataset.lang;
+  const q = state.currentExp.scaleQuestions[sName] && state.currentExp.scaleQuestions[sName][qi];
+  if (!q) return;
+  if (lang === 'en') q.textEn = el.value;
+  else q.text = el.value.trim() || el.value;
 }
 
 function removeQuestion(sName, qi) {
@@ -1826,6 +1865,55 @@ function removeQuestion(sName, qi) {
   // 重新渲染预览以更新序号
   renderPreviewModal();
   toast('已移除该题项（仅对当前实验生效）', 'success');
+}
+
+// 调用 Anthropic API 做翻译的公共函数
+async function callTranslateAPI(apiKey, texts) {
+  const prompt = `请将下面这些中文心理学/用户体验量表题目逐条翻译为英文，保持学术量表惯用表达，语气与原文一致。以JSON数组格式返回，顺序与输入一致，只返回JSON数组本身，不要其他文字。\n\n${JSON.stringify(texts)}`;
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }] })
+  });
+  const data = await resp.json();
+  const text = (data.content || []).map(b => b.text || '').join('');
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+// 单题翻译
+async function translateSingleQuestion(sName, qi) {
+  const apiKey = document.getElementById('api-key-input').value.trim();
+  if (!apiKey) { toast('请先在右上角输入 Claude API Key', 'warn'); return; }
+  const q = state.currentExp.scaleQuestions[sName][qi];
+  if (!q || !q.text) return;
+  toast('翻译中…');
+  try {
+    const result = await callTranslateAPI(apiKey, [q.text]);
+    q.textEn = result[0] || q.textEn;
+    renderPreviewModal();
+    toast('翻译完成', 'success');
+  } catch (e) {
+    toast('翻译失败：' + (e.message || '请检查API Key和网络'), 'error');
+  }
+}
+
+// 整表批量翻译
+async function translateScaleAll(sName) {
+  const apiKey = document.getElementById('api-key-input').value.trim();
+  if (!apiKey) { toast('请先在右上角输入 Claude API Key', 'warn'); return; }
+  const questions = state.currentExp.scaleQuestions[sName] || [];
+  const targets = questions.map((q, qi) => ({ q, qi })).filter(({q}) => !q.removed && q.text);
+  if (!targets.length) { toast('该量表暂无可翻译的题目', 'warn'); return; }
+  toast(`正在翻译「${sName}」全部 ${targets.length} 题…`);
+  try {
+    const result = await callTranslateAPI(apiKey, targets.map(t => t.q.text));
+    targets.forEach((t, i) => { t.q.textEn = result[i] || t.q.textEn; });
+    renderPreviewModal();
+    toast('整表翻译完成 ✓', 'success');
+  } catch (e) {
+    toast('翻译失败：' + (e.message || '请检查API Key和网络'), 'error');
+  }
 }
 
 // AI Clean
@@ -1854,7 +1942,12 @@ async function aiCleanQuestions() {
     const json = JSON.parse(text.replace(/```json|```/g, '').trim());
     uniqueScaleNames.forEach(sName => {
       if (json[sName]) {
-        state.currentExp.scaleQuestions[sName] = json[sName].map(q => ({ text: q, removed: false }));
+        // 保留已有的英文翻译（按文本内容匹配），避免清洗后丢失已翻译内容
+        const oldQuestions = state.currentExp.scaleQuestions[sName] || [];
+        state.currentExp.scaleQuestions[sName] = json[sName].map(q => {
+          const old = oldQuestions.find(o => o.text === q);
+          return { text: q, textEn: old ? old.textEn || '' : '', removed: false };
+        });
       }
     });
     renderPreviewModal();
@@ -1990,6 +2083,10 @@ function loadExperiment(id) {
       ...(exp.scaleOrder||[]).map(n => ({ type:'scale', name:n, instanceId:'scale_'+n+'_0' })),
     ];
   }
+  // 兼容旧模板：补全 textEn 字段
+  Object.values(state.currentExp.scaleQuestions || {}).forEach(qs => {
+    qs.forEach(q => { if (q.textEn === undefined) q.textEn = ''; });
+  });
   state.selectedMedia = new Set((exp.mediaOrder||[]).filter(n => state.mediaFiles.some(f => f.name === n)));
   state.selectedScales = new Set((exp.scaleOrder||[]).filter(n => state.scaleFiles.some(s => s.name === n)));
   Object.assign(state.scaleScoring, exp.scaleScoring || {});
@@ -2236,14 +2333,24 @@ function showScaleStep(step, idx) {
     return;
   }
 
+  const showEn = state.execShowEnglish !== false; // 默认显示双语
+  const hasAnyEn = questions.some(q => q.textEn);
+
   let html = `<div style="width:100%;max-width:600px;">
-    <h2 style="font-size:16px;font-weight:700;margin-bottom:6px;">${escHtml(sName)}${repeatHint}</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <h2 style="font-size:16px;font-weight:700;">${escHtml(sName)}${repeatHint}</h2>
+      ${hasAnyEn ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="toggleExecLanguage(${idx})">
+        ${showEn ? '🌐 隐藏英文' : '🌐 显示英文'}</button>` : ''}
+    </div>
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:24px;">${points}点李克特量表（1=完全不同意，${points}=完全同意）</p>`;
 
   questions.forEach((q, qi) => {
     const answered = ctx.answers[instanceId][qi] !== undefined;
     html += `<div class="question-block${answered?' answered':''}" id="qblock-${qi}">
-      <div class="question-text${answered?' answered':''}">${qi+1}. ${escHtml(q.text)}</div>
+      <div class="question-text${answered?' answered':''}">
+        <div>${qi+1}. ${escHtml(q.text)}</div>
+        ${showEn && q.textEn ? `<div style="font-size:12px;font-style:italic;color:var(--text-muted);margin-top:2px;">${escHtml(q.textEn)}</div>` : ''}
+      </div>
       <div class="likert-scale">`;
     for (let v=1; v<=points; v++) {
       const sel = ctx.answers[instanceId][qi] === v;
@@ -2261,6 +2368,12 @@ function showScaleStep(step, idx) {
     ${!isLast
       ? `<button class="btn btn-primary" onclick="nextScaleStep('${escHtml(instanceId)}','${escHtml(sName)}',${idx})">下一步 →</button>`
       : `<button class="btn btn-primary" onclick="nextScaleStep('${escHtml(instanceId)}','${escHtml(sName)}',${idx})">提交测试 ✓</button>`}`;
+}
+
+function toggleExecLanguage(idx) {
+  state.execShowEnglish = !(state.execShowEnglish !== false);
+  const ctx = state.execContext;
+  showScaleStep(ctx.flowSteps[idx], idx);
 }
 
 function selectAnswer(instanceId, sName, qi, value, points, stepIdx) {
@@ -2516,7 +2629,8 @@ function exportCSV() {
         const key = `${step.instanceId}||${visIdx}`;
         if (!colKeySet.has(key)) {
           colKeySet.add(key);
-          colDefs.push({ key, instanceId: step.instanceId, scaleName: step.name, visIdx, header: `${step.name}${suffix}_Q${visIdx+1}_${q.text}` });
+          const enSuffix = q.textEn ? `（${q.textEn}）` : '';
+          colDefs.push({ key, instanceId: step.instanceId, scaleName: step.name, visIdx, header: `${step.name}${suffix}_Q${visIdx+1}_${q.text}${enSuffix}` });
         }
       });
     });
@@ -2863,16 +2977,6 @@ function seedPresetCase(caseId) {
     toast('未找到预置案例', 'error');
     return;
   }
-function loadAllPresetCases() {
-  Object.keys(PRESET_CASES).forEach(caseId => {
-    seedPresetCase(caseId);
-  });
-
-  renderMediaList();
-  renderScaleList();
-  renderArchive();
-  toast('全部预置实验已加载，可直接开始测试 ✓', 'success');
-}
   // 1. 注入线上素材
   c.media.forEach(m => {
     if (!state.mediaFiles.some(f => f.name === m.name)) {
@@ -2917,6 +3021,7 @@ function loadAllPresetCases() {
   c.scales.forEach(s => {
     scaleQuestions[s.name] = s.questions.map(q => ({
       text: q,
+      textEn: '',
       removed: false
     }));
   });
@@ -2959,7 +3064,8 @@ function loadAllPresetCases() {
     scaleFolderPath.style.display = 'block';
   }
 }
-  function loadAllPresetCases() {
+
+function loadAllPresetCases() {
   Object.keys(PRESET_CASES).forEach(caseId => {
     seedPresetCase(caseId);
   });
@@ -2969,7 +3075,8 @@ function loadAllPresetCases() {
   renderArchive();
   toast('全部预置实验已加载，可直接开始测试 ✓', 'success');
 }
-  (function init() {
+
+(function init() {
   // Check browser support
   if (!window.indexedDB || !window.File || !window.FileReader) {
     document.getElementById('unsupported-banner').style.display = 'flex';
