@@ -2931,13 +2931,13 @@ const PRESET_CASES = {
 
     scales: exp01Scales,
 
-    flow: exp01Media.flatMap(m => [
-      { type: 'media', name: m.name },
+    flow: [
+      ...exp01Media.map(m => ({ type: 'media', name: m.name })),
       { type: 'scale', name: '风险感知量表' },
       { type: 'scale', name: '情境意识量表' },
       { type: 'scale', name: '心理负荷量表' },
       { type: 'scale', name: '视觉疲劳量表' }
-    ])
+    ]
   },
     exp02: {
     id: 'preset-exp02',
@@ -2949,10 +2949,10 @@ const PRESET_CASES = {
 
     scales: exp02Scales,
 
-    flow: exp02Media.flatMap(m => [
-      { type: 'media', name: m.name },
+    flow: [
+      ...exp02Media.map(m => ({ type: 'media', name: m.name })),
       ...exp02Scales.map(s => ({ type: 'scale', name: s.name }))
-    ])
+    ]
   },
 
   exp03: {
@@ -2965,10 +2965,10 @@ const PRESET_CASES = {
 
     scales: exp03Scales,
 
-    flow: exp03Media.flatMap(m => [
-      { type: 'media', name: m.name },
+    flow: [
+      ...exp03Media.map(m => ({ type: 'media', name: m.name })),
       ...exp03Scales.map(s => ({ type: 'scale', name: s.name }))
-    ])
+    ]
   }
 };
 function seedPresetCase(caseId) {
